@@ -1,6 +1,6 @@
 # STAR SDK Android
 ## Introduction
-This is the Android version of the Secure Tag for Approach Recognition (STAR) SDK. The idea of the sdk is, to provide a SDK, which enables an easy way to provide methods for contact tracing. This project was built within 72 hours at the HackZurich Hackathon 2020.
+This is the Android version of the Secure Tag for Approach Recognition (STAR) SDK. The idea of the sdk is, to provide a SDK, which enables an easy way to provide methods for contact tracing. This project was built within 71 hours at the HackZurich Hackathon 2020.
 
 ## Architecture
 There exists a central discovery server on [Github](https://raw.githubusercontent.com/SecureTagForApproachRecognition/discovery/master/discovery.json). This server provides the necessary information for the SDK to initialize itself. After the SDK loaded the base url for its own backend it will load the infected list from there, as well as post if a user is infected.
