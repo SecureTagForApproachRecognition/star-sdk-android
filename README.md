@@ -14,8 +14,22 @@ There exists a documentation repository in the [STAR](https://github.com/SecureT
 ## Function overview
 
 ## Building a AAR
+To build an aar file that you can include in your project use:
+```sh
+$ ./gradlew assemble
+```
+The library is generated under sdk/build/outputs/aar
 
 ## Integrating into a Project
+Include the builded aar file by adding it to your project. Make sure that you also include the following dependencies:
+```groovy
+	implementation 'androidx.core:core:1.2.0'
+	implementation "androidx.security:security-crypto:1.0.0-beta01"
+	implementation 'androidx.work:work-runtime:2.3.4'
+
+	implementation 'com.squareup.retrofit2:retrofit:2.6.2'
+	implementation 'com.squareup.retrofit2:converter-gson:2.6.2'
+```
 
 ## Using the SDK
 
