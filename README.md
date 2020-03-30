@@ -79,6 +79,20 @@ startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
 					Uri.parse("package:" + getContext().getPackageName())));
 ```
 
+Tracing is automatically restarted if the phone is rebooted by the SDK, it is enough to call start() once from your app.
+
+### Customize tracing notification
+The tracing happens in a foreground service and therefore displays a notification. This notification can be customized by defining the following string resources in your project:
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="star_sdk_service_notification_channel">@string/app_name</string>
+	<string name="star_sdk_service_notification_title">@string/app_name</string>
+	<string name="star_sdk_service_notification_text">@string/foreground_service_notification_text</string>
+</resources>
+```
+To change the notification icon add your custom ic_begegnungen drawable to the project.
+
 ### Checking the current tracing status
 ```java
 TracingStatus status = STARTracing.getStatus(getContext());
