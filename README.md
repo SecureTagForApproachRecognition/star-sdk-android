@@ -1,6 +1,6 @@
 # STAR SDK Android
 ## Introduction
-This is the Android version of the Secure Tag for Approach Recognition (STAR) SDK. The idea of the sdk is, to provide an SDK, which enables an easy way to provide methods for contact tracing. This project was built within 71 hours at the HackZurich Hackathon 2020.
+This is the Android version of the Secure Tag for Approach Recognition (STAR) SDK. The idea of the sdk is, to provide a SDK, which enables an easy way to provide methods for contact tracing. This project was built within 71 hours at the HackZurich Hackathon 2020.
 
 ## Architecture
 There exists a central discovery server on [Github](https://raw.githubusercontent.com/SecureTagForApproachRecognition/discovery/master/discovery.json). This server provides the necessary information for the SDK to initialize itself. After the SDK loaded the base url for its own backend it will load the infected list from there, as well as post if a user is infected.
@@ -9,7 +9,7 @@ The backend should hence gather all the infected list  from other backends and p
 
 ## Further Documentation
 
-There exists a documentation repository in the [STAR](https://github.com/SecureTagForApproachRecognition) Organization. It includes Swagger YAMLs for the backend API definitions, as well as some more technical details on how the keys are generated and how the validation mechanism works.
+There exists a documentation repository in the [STAR](https://github.com/SecureTagForApproachRecognition) Organization. It includes Swager YAMLs for the backend API definitions, as well as some more technical details on how the keys are generated and how the validation mechanism works
 
 ## Function overview
 
@@ -55,3 +55,57 @@ implementation 'com.squareup.retrofit2:converter-gson:2.6.2'
 
 ## Using the SDK
 
+### Initialization
+In your Application.onCreate() you have to initialize the SDK with:
+```java
+STARTracing.init(getContext(), "com.exmaple.your.app");
+```
+The provided app name has to be registered in the discovery service on [Github](https://raw.githubusercontent.com/SecureTagForApproachRecognition/discovery/master/discovery.json)
+
+### Start / Stop tracing
+To start and stop tracing use
+```java
+STARTracing.start(getContext());
+STARTracing.stop(getContext());
+```
+Make sure that the user has the permission Manifest.permission.ACCESS_FINE_LOCATION granted, Bluetooth is enabled and BatteryOptimization is disabled. BatteryOptimization can be checked with
+```java
+PowerManager powerManager = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
+boolean batteryOptDeact = powerManager.isIgnoringBatteryOptimizations(getContext().getPackageName());
+```
+and for asking the user to disable the optimization use:
+```java
+startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+					Uri.parse("package:" + getContext().getPackageName())));
+```
+
+### Checking the current tracing status
+```java
+TracingStatus status = STARTracing.getStatus(getContext());
+```
+The TracingStatus object contains all information of the current tracing status.
+
+To get notified when the status changes, you can register a broadcast receiver with
+```java
+getContext().registerReceiver(broadcastReceiver, STARTracing.getUpdateIntentFilter());
+```
+
+### Report user exposed
+```java
+STARTracing.sendIWasExposed(getContext(), null, new CallbackListener<Void>() {
+				@Override
+				public void onSuccess(Void response) {
+				}
+
+				@Override
+				public void onError(Throwable throwable) {
+				}
+			});
+```
+
+### Sync with backend for exposed user
+The SDK automatically registers a periodic Job to sync with the backend for new exposed users. If you want to trigger a sync manually (eg. upon a push from your backend) you can use:
+```java
+STARTracing.sync(getContext());
+```
+Make sure you do not call this method on the UI thread, because it will perform the sync synchronously.
