@@ -1,0 +1,2 @@
+-keep class ch.ubique.android.starsdk.backend.models.** { *; }
+-keep class ch.ubique.android.starsdk.database.models.** { *; }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<string name="star_sdk_service_notification_channel">STAR SDK</string>
+	<string name="star_sdk_service_notification_title">STAR SDK</string>
+	<string name="star_sdk_service_notification_text">Looking for people nearby…</string>
+
+</resources>
