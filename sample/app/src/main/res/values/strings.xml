@@ -39,5 +39,6 @@
 	<string name="dialog_button_ok">OK</string>
 	<string name="tab_controls">controls</string>
 	<string name="tab_parameters">parameters</string>
+	<string name="tab_handshakes">handshakes</string>
 	<string name="tab_logs">logs</string>
 </resources>
