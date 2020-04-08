@@ -1,0 +1,37 @@
+<resources>
+	<string name="app_name">StarSDK Sample</string>
+	<string name="star_sdk_service_notification_channel">@string/app_name</string>
+	<string name="star_sdk_service_notification_title">@string/app_name</string>
+	<string name="star_sdk_service_notification_text">The app is looking for other people nearby…</string>
+	<string name="push_exposed_title">push_exposed_title</string>
+	<string name="push_exposed_text">push_exposed_text</string>
+	<string name="req_location_permission_ungranted">give location permission</string>
+	<string name="req_location_permission_granted">location permission granted</string>
+	<string name="req_bluetooth_inactive">activate bluetooth</string>
+	<string name="req_bluetooth_active">bluetooth activated</string>
+	<string name="req_battery_active">"deactivate battery optimization"</string>
+	<string name="req_battery_deactivated">"battery optimization deactivated"</string>
+	<string name="button_sync">force sync</string>
+	<string name="button_tracking_start">start tracking</string>
+	<string name="button_tracking_stop">stop tracking</string>
+	<string name="button_report_exposed">report exposed</string>
+	<string name="button_report_healed">report healed</string>
+	<string name="status_tracking_active">TRACKING</string>
+	<string name="status_tracking_inactive">STOPPED</string>
+	<string name="status_last_synced">last synced: %1$s</string>
+	<string name="status_number_handshakes">handshakes: %1$d</string>
+	<string name="status_been_exposed">has been exposed: %1$b</string>
+	<string name="status_self_exposed">self exposed: %1$b</string>
+	<string name="dialog_expose_title">Broadcast exposed</string>
+	<string name="dialog_healed_title">Broadcast healed</string>
+	<string name="dialog_expose_message">Do you really want to continue?</string>
+	<string name="dialog_expose_positive_button">Continue</string>
+	<string name="dialog_expose_negative_button">Cancel</string>
+	<string name="dialog_title_success">Success</string>
+	<string name="dialog_title_error">Error</string>
+	<string name="dialog_message_request_success">Request was sent successfully</string>
+	<string name="dialog_button_ok">OK</string>
+	<string name="tab_controls">controls</string>
+	<string name="tab_parameters">parameters</string>
+	<string name="tab_logs">logs</string>
+</resources>

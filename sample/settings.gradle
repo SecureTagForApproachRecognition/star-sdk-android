@@ -1,0 +1,4 @@
+rootProject.name='StarSDK Sample'
+include ':app', ':starsdk'
+project(':starsdk').projectDir = new File('../sdk')
+
