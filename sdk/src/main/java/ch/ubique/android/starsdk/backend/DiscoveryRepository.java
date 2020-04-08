@@ -5,7 +5,6 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk.backend;
 
 import android.content.Context;
@@ -35,10 +34,11 @@ public class DiscoveryRepository implements Repository {
 		discoveryService = retrofit.create(DiscoveryService.class);
 	}
 
-	public void getDiscovery(@NonNull CallbackListener<ApplicationsList> callbackListener) {
+	public void getDiscovery(@NonNull CallbackListener<ApplicationsList> callbackListener, boolean dev) {
 		//TODO caching for no network connection
 
-		discoveryService.getDiscovery().enqueue(new Callback<ApplicationsList>() {
+		Call<ApplicationsList> call = dev ? discoveryService.getDiscoveryDev() : discoveryService.getDiscovery();
+		call.enqueue(new Callback<ApplicationsList>() {
 
 			@Override
 			public void onResponse(@NonNull Call<ApplicationsList> call, @NonNull Response<ApplicationsList> response) {
@@ -56,8 +56,8 @@ public class DiscoveryRepository implements Repository {
 		});
 	}
 
-	public ApplicationsList getDiscoverySync() throws IOException {
-		return discoveryService.getDiscovery().execute().body();
+	public ApplicationsList getDiscoverySync(boolean dev) throws IOException {
+		return (dev ? discoveryService.getDiscoveryDev() : discoveryService.getDiscovery()).execute().body();
 	}
 
 }

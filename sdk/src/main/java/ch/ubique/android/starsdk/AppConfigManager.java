@@ -40,6 +40,7 @@ public class AppConfigManager {
 	private static final String PREF_AM_I_EXPOSED = "amIExposed";
 
 	private String appId;
+	private boolean isDev;
 	private SharedPreferences sharedPrefs;
 	private DiscoveryRepository discoveryRepository;
 
@@ -63,11 +64,11 @@ public class AppConfigManager {
 			public void onError(Throwable throwable) {
 				throwable.printStackTrace();
 			}
-		});
+		}, isDev);
 	}
 
 	public void loadSynchronous() throws IOException {
-		ApplicationsList response = discoveryRepository.getDiscoverySync();
+		ApplicationsList response = discoveryRepository.getDiscoverySync(isDev);
 		sharedPrefs.edit().putString(PREF_APPLICATION_LIST, new Gson().toJson(response)).commit();
 	}
 
@@ -108,6 +109,14 @@ public class AppConfigManager {
 		Application appConfig = getAppConfig();
 		//TODO what if appConfig is not yet loaded?
 		return new BackendRepository(context, appConfig.getBackendBaseUrl(), appConfig.getListBaseUrl());
+	}
+
+	public void setDevModeEnabled(boolean enable) {
+		isDev = enable;
+	}
+
+	public boolean isDevModeEnabled() {
+		return isDev;
 	}
 
 }

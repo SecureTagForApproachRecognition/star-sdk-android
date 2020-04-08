@@ -127,4 +127,14 @@ public class STARTracing {
 		return intentFilter;
 	}
 
+	public static void setDevModeEnabled(Context context, boolean enable) {
+		checkInit();
+		AppConfigManager.getInstance(context).setDevModeEnabled(enable);
+	}
+
+	public static boolean isDevModeEnabled(Context context) {
+		checkInit();
+		return AppConfigManager.getInstance(context).isDevModeEnabled();
+	}
+
 }
