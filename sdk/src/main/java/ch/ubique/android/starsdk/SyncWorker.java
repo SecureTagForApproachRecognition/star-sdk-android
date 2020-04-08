@@ -87,6 +87,7 @@ public class SyncWorker extends Worker {
 		int newMaxId = lastKnownId;
 
 		Calendar cal = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+		long currentTime = cal.getTimeInMillis();
 		cal.add(Calendar.DATE, -14);
 		SimpleDateFormat sdf = new SimpleDateFormat("YYYYMMdd");
 
@@ -114,6 +115,8 @@ public class SyncWorker extends Worker {
 			lastKnownId = newMaxId;
 			prefs.edit().putInt(PREF_LAST_KNOWN_ID, lastKnownId).apply();
 		}
+
+		appConfigManager.setLastSyncDate(currentTime);
 	}
 
 }
