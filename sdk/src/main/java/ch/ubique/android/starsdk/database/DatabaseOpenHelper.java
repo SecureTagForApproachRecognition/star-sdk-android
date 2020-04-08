@@ -46,7 +46,7 @@ class DatabaseOpenHelper extends SQLiteOpenHelper {
 		onCreate(db); //do as we create a new table
 	}
 
-	private void recreateTables(@NonNull SQLiteDatabase db) {
+	public void recreateTables(@NonNull SQLiteDatabase db) {
 		new Transaction(db,
 				KnownCases.drop(),
 				HandShakes.drop(),

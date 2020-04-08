@@ -21,6 +21,7 @@ import ch.ubique.android.starsdk.backend.ResponseException;
 import ch.ubique.android.starsdk.backend.models.Exposee;
 import ch.ubique.android.starsdk.crypto.STARModule;
 import ch.ubique.android.starsdk.database.Database;
+import ch.ubique.android.starsdk.util.LogHelper;
 import ch.ubique.android.starsdk.util.ProcessUtil;
 
 public class STARTracing {
@@ -146,6 +147,19 @@ public class STARTracing {
 	public static boolean isDevModeEnabled(Context context) {
 		checkInit();
 		return AppConfigManager.getInstance(context).isDevModeEnabled();
+	}
+
+	public static void clearData(Context context, Runnable onDeleteListener) {
+		checkInit();
+		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
+		if (appConfigManager.isAdvertisingEnabled() || appConfigManager.isReceivingEnabled()) {
+			throw new IllegalStateException("Tracking must be stopped for clearing the local data");
+		}
+
+		appConfigManager.clearPreferences();
+		LogHelper.clearLog(context);
+		Database db = new Database(context);
+		db.recreateTables(response -> onDeleteListener.run());
 	}
 
 }

@@ -9,11 +9,7 @@ package ch.ubique.android.starsdk.util;
 
 import android.content.Context;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.Date;
 
 public class LogHelper {
@@ -29,6 +25,15 @@ public class LogHelper {
 	public static void init(Context context) {
 		if (instance == null) {
 			instance = new LogHelper(context);
+		}
+	}
+
+	public static void clearLog(Context context) {
+		if (instance == null) init(context);
+		try {
+			new PrintWriter(instance.logFile).close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 		}
 	}
 

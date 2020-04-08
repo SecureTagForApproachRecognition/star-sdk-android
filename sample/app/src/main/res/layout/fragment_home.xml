@@ -34,7 +34,7 @@
 			style="@style/Sample.Button.Requirements"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_marginBottom="@dimen/spacing_huge"
+			android:layout_marginBottom="@dimen/spacing_large"
 			tools:text="@string/req_bluetooth_inactive" />
 
 		<TextView
@@ -59,10 +59,10 @@
 		<LinearLayout
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginBottom="@dimen/spacing_large"
-			android:gravity="center_horizontal"
 			android:layout_marginStart="@dimen/spacing_large"
 			android:layout_marginEnd="@dimen/spacing_large"
+			android:layout_marginBottom="@dimen/spacing_large"
+			android:gravity="center_horizontal"
 			android:orientation="horizontal">
 
 			<Button
@@ -71,18 +71,18 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:layout_marginRight="@dimen/spacing_medium"
+				android:layout_weight="2"
 				android:text="@string/button_advertising_start"
-				app:backgroundTint="@color/selector_button_red"
-				android:layout_weight="2"/>
+				app:backgroundTint="@color/selector_button_red" />
 
 			<Button
 				android:id="@+id/home_button_start_receiving"
 				style="@style/Sample.Button"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
+				android:layout_weight="2"
 				android:text="@string/button_receiving_start"
-				app:backgroundTint="@color/selector_button_red"
-				android:layout_weight="2"/>
+				app:backgroundTint="@color/selector_button_red" />
 
 		</LinearLayout>
 
@@ -91,10 +91,18 @@
 			style="@style/Sample.Button"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_marginBottom="@dimen/spacing_huge"
+			android:layout_marginBottom="@dimen/spacing_large"
 			android:text="@string/button_sync"
 			app:backgroundTint="@color/blue"
 			app:icon="@drawable/ic_refresh" />
+
+		<Button
+			android:id="@+id/home_button_clear_data"
+			style="@style/Sample.Button"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="@dimen/spacing_large"
+			android:text="@string/button_clear_data" />
 
 		<FrameLayout
 			android:layout_width="wrap_content"
