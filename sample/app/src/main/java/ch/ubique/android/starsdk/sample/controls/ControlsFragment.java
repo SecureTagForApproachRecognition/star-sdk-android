@@ -1,4 +1,4 @@
-package ch.ubique.android.starsdk.sample;
+package ch.ubique.android.starsdk.sample.controls;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
@@ -35,12 +35,13 @@ import ch.ubique.android.starsdk.STARTracing;
 import ch.ubique.android.starsdk.TracingStatus;
 import ch.ubique.android.starsdk.backend.CallbackListener;
 import ch.ubique.android.starsdk.backend.ResponseException;
+import ch.ubique.android.starsdk.sample.R;
 import ch.ubique.android.starsdk.sample.util.DialogUtil;
 import ch.ubique.android.starsdk.sample.util.RequirementsUtil;
 
-public class HomeFragment extends Fragment {
+public class ControlsFragment extends Fragment {
 
-	private static final String TAG = HomeFragment.class.getCanonicalName();
+	private static final String TAG = ControlsFragment.class.getCanonicalName();
 
 	private static final int REQUEST_CODE_PERMISSION_LOCATION = 1;
 
@@ -64,8 +65,8 @@ public class HomeFragment extends Fragment {
 		}
 	};
 
-	public static HomeFragment newInstance() {
-		return new HomeFragment();
+	public static ControlsFragment newInstance() {
+		return new ControlsFragment();
 	}
 
 	@Nullable

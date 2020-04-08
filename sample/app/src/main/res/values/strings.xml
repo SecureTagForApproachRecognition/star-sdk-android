@@ -31,4 +31,7 @@
 	<string name="dialog_title_error">Error</string>
 	<string name="dialog_message_request_success">Request was sent successfully</string>
 	<string name="dialog_button_ok">OK</string>
+	<string name="tab_controls">controls</string>
+	<string name="tab_parameters">parameters</string>
+	<string name="tab_logs">logs</string>
 </resources>

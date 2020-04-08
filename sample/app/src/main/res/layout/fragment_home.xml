@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent">
@@ -60,11 +61,10 @@
 			style="@style/Sample.Button"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:drawableLeft="@drawable/ic_refresh"
-			android:drawablePadding="@dimen/spacing_medium"
 			android:layout_marginBottom="@dimen/spacing_huge"
-			android:backgroundTint="@color/blueLight"
-			android:text="@string/button_sync" />
+			android:text="@string/button_sync"
+			app:backgroundTint="@color/blue"
+			app:icon="@drawable/ic_refresh" />
 
 		<FrameLayout
 			android:layout_width="wrap_content"

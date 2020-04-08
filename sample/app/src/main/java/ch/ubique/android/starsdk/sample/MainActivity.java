@@ -3,7 +3,13 @@ package ch.ubique.android.starsdk.sample;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import android.os.Bundle;
-import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import ch.ubique.android.starsdk.sample.controls.ControlsFragment;
+import ch.ubique.android.starsdk.sample.logs.LogsFragment;
+import ch.ubique.android.starsdk.sample.parameters.ParametersFragment;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -12,21 +18,49 @@ public class MainActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+		setupNavigationView();
+
 		if (savedInstanceState == null) {
 			ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_content),
 					(v, insets) -> {
-						FrameLayout mainView = findViewById(R.id.main_content);
-						FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) mainView.getLayoutParams();
-						layoutParams.topMargin += insets.getSystemWindowInsetTop();
-						layoutParams.bottomMargin += insets.getSystemWindowInsetBottom();
-						mainView.setLayoutParams(layoutParams);
+						LinearLayout mainView = findViewById(R.id.main_content);
+						mainView.setPadding(insets.getSystemWindowInsetLeft(),
+								insets.getSystemWindowInsetTop(),
+								insets.getSystemWindowInsetRight(),
+								insets.getSystemWindowInsetBottom());
 						return insets;
 					});
 
 			getSupportFragmentManager().beginTransaction()
-					.add(R.id.main_fragment_container, HomeFragment.newInstance())
+					.add(R.id.main_fragment_container, ControlsFragment.newInstance())
 					.commit();
 		}
+	}
+
+	private void setupNavigationView() {
+		BottomNavigationView navigationView = findViewById(R.id.main_navigation_view);
+		navigationView.inflateMenu(R.menu.menu_navigation_main);
+
+		navigationView.setOnNavigationItemSelectedListener(item -> {
+			switch (item.getItemId()) {
+				case R.id.action_controls:
+					getSupportFragmentManager().beginTransaction()
+							.replace(R.id.main_fragment_container, ControlsFragment.newInstance())
+							.commit();
+					break;
+				case R.id.action_parameters:
+					getSupportFragmentManager().beginTransaction()
+							.replace(R.id.main_fragment_container, ParametersFragment.newInstance())
+							.commit();
+					break;
+				case R.id.action_logs:
+					getSupportFragmentManager().beginTransaction()
+							.replace(R.id.main_fragment_container, LogsFragment.newInstance())
+							.commit();
+					break;
+			}
+			return true;
+		});
 	}
 
 }
