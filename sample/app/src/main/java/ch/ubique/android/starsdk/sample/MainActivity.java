@@ -21,16 +21,6 @@ public class MainActivity extends AppCompatActivity {
 		setupNavigationView();
 
 		if (savedInstanceState == null) {
-			ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_content),
-					(v, insets) -> {
-						LinearLayout mainView = findViewById(R.id.main_content);
-						mainView.setPadding(insets.getSystemWindowInsetLeft(),
-								insets.getSystemWindowInsetTop(),
-								insets.getSystemWindowInsetRight(),
-								insets.getSystemWindowInsetBottom());
-						return insets;
-					});
-
 			getSupportFragmentManager().beginTransaction()
 					.add(R.id.main_fragment_container, ControlsFragment.newInstance())
 					.commit();
