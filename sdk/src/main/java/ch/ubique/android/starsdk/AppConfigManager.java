@@ -93,6 +93,10 @@ public class AppConfigManager {
 		return sharedPrefs.getBoolean(PREF_TRACING_ENABLED, false);
 	}
 
+	public void setLastSyncDate(long lastSyncDate) {
+		sharedPrefs.edit().putLong(PREF_LAST_SYNC_DATE, lastSyncDate).commit();
+	}
+
 	public long getLastSyncDate() {
 		return sharedPrefs.getLong(PREF_LAST_SYNC_DATE, 0);
 	}
