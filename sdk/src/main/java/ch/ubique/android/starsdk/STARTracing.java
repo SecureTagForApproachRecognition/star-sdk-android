@@ -149,6 +149,16 @@ public class STARTracing {
 		return AppConfigManager.getInstance(context).isDevModeEnabled();
 	}
 
+	public static void setCalibrationTestDeviceName(Context context, String name) {
+		checkInit();
+		AppConfigManager.getInstance(context).setCalibrationTestDeviceName(name);
+	}
+
+	public static void disableCalibrationTestDeviceName(Context context) {
+		checkInit();
+		AppConfigManager.getInstance(context).setCalibrationTestDeviceName(null);
+	}
+
 	public static void clearData(Context context, Runnable onDeleteListener) {
 		checkInit();
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
