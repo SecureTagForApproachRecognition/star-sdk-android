@@ -5,15 +5,10 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk.gatt;
 
 import android.bluetooth.*;
-import android.bluetooth.le.BluetoothLeScanner;
-import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanFilter;
-import android.bluetooth.le.ScanResult;
-import android.bluetooth.le.ScanSettings;
+import android.bluetooth.le.*;
 import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
@@ -21,6 +16,7 @@ import android.os.HandlerThread;
 import android.os.ParcelUuid;
 import android.util.Base64;
 import android.util.Log;
+import android.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,9 +26,9 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import ch.ubique.android.starsdk.BroadcastHelper;
-import ch.ubique.android.starsdk.util.LogHelper;
 import ch.ubique.android.starsdk.TracingService;
 import ch.ubique.android.starsdk.database.Database;
+import ch.ubique.android.starsdk.util.LogHelper;
 
 public class BleClient {
 
@@ -42,7 +38,7 @@ public class BleClient {
 	private BluetoothLeScanner bleScanner;
 	private ScanCallback bleScanCallback;
 	private BluetoothGatt bluetoothGatt;
-	private LinkedBlockingQueue<BluetoothDevice> bluetoothDevicesToConnect = new LinkedBlockingQueue<>();
+	private LinkedBlockingQueue<Pair<BluetoothDevice, ScanResult>> bluetoothDevicesToConnect = new LinkedBlockingQueue<>();
 
 	private Runnable closeGattAndConnectToNextDevice = new Runnable() {
 		@Override
@@ -146,7 +142,7 @@ public class BleClient {
 
 			deviceLastConnected.put(bluetoothDevice.getAddress(), System.currentTimeMillis());
 
-			connectGatt(bluetoothDevice);
+			connectGatt(bluetoothDevice, scanResult);
 		} catch (Throwable t) {
 			t.printStackTrace();
 			LogHelper.append(t);
@@ -157,21 +153,25 @@ public class BleClient {
 		return Math.pow(10, (txPower - rssi) / 20.0) / 1000.0;
 	}
 
-	public void connectGatt(BluetoothDevice bluetoothDevice) {
-		bluetoothDevicesToConnect.add(bluetoothDevice);
+	public void connectGatt(BluetoothDevice bluetoothDevice, ScanResult scanResult) {
+		bluetoothDevicesToConnect.add(new Pair(bluetoothDevice, scanResult));
 	}
 
 	private void connectGattForNextQueueElement() {
-		BluetoothDevice bluetoothDevice = null;
+		Pair<BluetoothDevice, ScanResult> bluetoothDeviceScanResultPair = null;
 		try {
-			bluetoothDevice = bluetoothDevicesToConnect.take();
+			bluetoothDeviceScanResultPair = bluetoothDevicesToConnect.take();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		if (bluetoothDevice == null) {
+		if (bluetoothDeviceScanResultPair == null) {
 			gattConnectHandler.post(this::connectGattForNextQueueElement);
 			return;
 		}
+
+		BluetoothDevice bluetoothDevice = bluetoothDeviceScanResultPair.first;
+		ScanResult scanResult = bluetoothDeviceScanResultPair.second;
+
 		Log.d("BleClient", "connecting GATT...");
 		LogHelper.append("Trying to connect to: " + bluetoothDevice.getAddress());
 
@@ -204,7 +204,7 @@ public class BleClient {
 				BluetoothGattService service = gatt.getService(BleServer.SERVICE_UUID);
 
 				if (service == null) {
-					Log.e("BluetoothGattCallback", "No GATT service for " + BleServer.SERVICE_UUID + " found, status="+status);
+					Log.e("BluetoothGattCallback", "No GATT service for " + BleServer.SERVICE_UUID + " found, status=" + status);
 					LogHelper.append("Could not find our GATT service");
 					closeGattAndConnectToNextDevice.run();
 					return;
@@ -230,9 +230,10 @@ public class BleClient {
 
 				if (characteristic.getUuid().equals(BleServer.TOTP_CHARACTERISTIC_UUID)) {
 					if (status == BluetoothGatt.GATT_SUCCESS) {
-						publishMessage(characteristic.getValue(), gatt.getDevice().getAddress());
+						addHandshakeToDatabase(characteristic.getValue(), gatt.getDevice().getAddress(),
+								scanResult.getScanRecord().getTxPowerLevel(), scanResult.getRssi());
 					} else {
-						Log.e("BluetoothGattCallback", "Failed to read characteristic. Status: "+status);
+						Log.e("BluetoothGattCallback", "Failed to read characteristic. Status: " + status);
 
 						// TODO error
 					}
@@ -271,11 +272,11 @@ public class BleClient {
 		}
 	}
 
-	public void publishMessage(byte[] starValue, String sender) {
+	public void addHandshakeToDatabase(byte[] starValue, String macAddress, int rxPowerLevel, int rssi) {
 		try {
 			String base64String = new String(Base64.encode(starValue, Base64.NO_WRAP));
 			Log.e("received", base64String);
-			new Database(context).addHandshake(context, starValue, System.currentTimeMillis());
+			new Database(context).addHandshake(context, starValue, macAddress, rxPowerLevel, rssi, System.currentTimeMillis());
 			LogHelper.append(base64String);
 		} catch (Exception e) {
 			e.printStackTrace();
