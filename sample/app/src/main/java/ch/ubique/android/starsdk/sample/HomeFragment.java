@@ -187,7 +187,10 @@ public class HomeFragment extends Fragment {
 		boolean isExposed = status.isAm_i_exposed();
 		buttonReportExposed.setText(getString(isExposed ? R.string.button_report_healed : R.string.button_report_exposed));
 		buttonReportExposed.setOnClickListener(
-				v -> DialogUtil.showExposeDialog(v.getContext(), (dialog, which) -> sendExposedUpdate(context, isExposed)));
+				v -> DialogUtil
+						.showConfirmDialog(v.getContext(),
+								isExposed ? R.string.dialog_healed_title : R.string.dialog_expose_title,
+								(dialog, which) -> sendExposedUpdate(context, isExposed)));
 	}
 
 	private SpannableString formatStatusString(TracingStatus status) {
@@ -196,9 +199,10 @@ public class HomeFragment extends Fragment {
 				.append("\n")
 				.setSpan(new StyleSpan(Typeface.BOLD), 0, builder.length() - 1, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
-		String lastSyncDate =
-				status.getLast_sync_date() > 0 ? DATE_FORMAT_SYNC.format(new Date(status.getLast_sync_date())) : "n/a";
-		builder.append(getString(R.string.status_last_synced, lastSyncDate)).append("\n")
+		long lastSyncDateUTC = status.getLast_sync_date();
+		String lastSyncDateString =
+				lastSyncDateUTC > 0 ? DATE_FORMAT_SYNC.format(new Date(lastSyncDateUTC)) : "n/a";
+		builder.append(getString(R.string.status_last_synced, lastSyncDateString)).append("\n")
 				.append(getString(R.string.status_self_exposed, status.isAm_i_exposed())).append("\n")
 				.append(getString(R.string.status_been_exposed, status.isWas_contact_exposed())).append("\n")
 				.append(getString(R.string.status_number_handshakes, status.getNumber_of_handshakes()));
@@ -215,10 +219,10 @@ public class HomeFragment extends Fragment {
 		return new SpannableString(builder);
 	}
 
-	private void sendExposedUpdate(Context context, boolean isHealed) {
+	private void sendExposedUpdate(Context context, boolean sendHeal) {
 		setExposeLoadingViewVisible(true);
-		if (isHealed) {
-			STARTracing.sendIWasExposed(context, null, new CallbackListener<Void>() {
+		if (sendHeal) {
+			STARTracing.sendIWasHealed(context, null, new CallbackListener<Void>() {
 				@Override
 				public void onSuccess(Void response) {
 					DialogUtil.showMessageDialog(context, getString(R.string.dialog_title_success),
@@ -236,7 +240,7 @@ public class HomeFragment extends Fragment {
 				}
 			});
 		} else {
-			STARTracing.sendIWasHealed(context, null, new CallbackListener<Void>() {
+			STARTracing.sendIWasExposed(context, null, new CallbackListener<Void>() {
 				@Override
 				public void onSuccess(Void response) {
 					DialogUtil.showMessageDialog(context, getString(R.string.dialog_title_success),

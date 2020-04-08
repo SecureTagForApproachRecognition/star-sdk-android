@@ -19,7 +19,7 @@ public class MainApplication extends Application {
 		if (ProcessUtil.isMainProcess(this)) {
 			registerReceiver(sdkReceiver, STARTracing.getUpdateIntentFilter());
 			// TODO: Register appId in discovery service (run on dev backend)
-			STARTracing.init(this, "ch.ubique.android.starsdk.sample");
+			STARTracing.init(this, "ch.ubique.starsdk.sample");
 		}
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			NotificationUtil.createNotificationChannel(this);
@@ -37,7 +37,7 @@ public class MainApplication extends Application {
 	private BroadcastReceiver sdkReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if (STARTracing.getStatus(context).isWas_contact_exposed() && PreferencesUtil.isExposedNotificationShown(context)) {
+			if (STARTracing.getStatus(context).isWas_contact_exposed() && !PreferencesUtil.isExposedNotificationShown(context)) {
 				NotificationUtil.showNotification(context, R.string.push_exposed_title,
 						R.string.push_exposed_text, R.drawable.ic_begegnungen);
 				PreferencesUtil.setExposedNotificationShown(context);

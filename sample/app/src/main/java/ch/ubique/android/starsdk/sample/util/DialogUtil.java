@@ -4,11 +4,13 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 
+import androidx.annotation.StringRes;
+
 import ch.ubique.android.starsdk.sample.R;
 
 public class DialogUtil {
 
-	public static void showExposeDialog(Context context, DialogInterface.OnClickListener positiveClickListener) {
+	public static void showConfirmDialog(Context context, @StringRes int title, DialogInterface.OnClickListener positiveClickListener) {
 		new AlertDialog.Builder(context)
 				.setTitle(R.string.dialog_expose_title)
 				.setMessage(R.string.dialog_expose_message)
