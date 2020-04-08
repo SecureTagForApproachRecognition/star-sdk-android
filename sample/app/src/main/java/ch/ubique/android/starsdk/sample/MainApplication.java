@@ -18,8 +18,7 @@ public class MainApplication extends Application {
 		super.onCreate();
 		if (ProcessUtil.isMainProcess(this)) {
 			registerReceiver(sdkReceiver, STARTracing.getUpdateIntentFilter());
-			// TODO: Register appId in discovery service (run on dev backend)
-			STARTracing.init(this, "ch.ubique.starsdk.sample");
+			STARTracing.init(this, "ch.ubique.starsdk.sample", true);
 		}
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			NotificationUtil.createNotificationChannel(this);
