@@ -22,8 +22,13 @@ public class TracingServiceBroadcastReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent i) {
 		Log.d("TracingServiceBdcRecv", "received broadcast to start service");
-		if (AppConfigManager.getInstance(context).isTracingEnabled()) {
+		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
+		boolean advertising = appConfigManager.isAdvertisingEnabled();
+		boolean receiving = appConfigManager.isReceivingEnabled();
+		if (advertising || receiving) {
 			Intent intent = new Intent(context, TracingService.class).setAction(TracingService.ACTION_START);
+			intent.putExtra(TracingService.EXTRA_ADVERTISE, advertising);
+			intent.putExtra(TracingService.EXTRA_RECEIVE, receiving);
 			ContextCompat.startForegroundService(context, intent);
 		}
 	}

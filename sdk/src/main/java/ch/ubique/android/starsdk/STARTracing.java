@@ -43,8 +43,10 @@ public class STARTracing {
 
 			STARModule.getInstance(context).init();
 
-			if (appConfigManager.isTracingEnabled()) {
-				start(context);
+			boolean advertising = appConfigManager.isAdvertisingEnabled();
+			boolean receiving = appConfigManager.isReceivingEnabled();
+			if (advertising || receiving) {
+				start(context, advertising, receiving);
 			}
 		}
 	}
@@ -56,18 +58,24 @@ public class STARTracing {
 	}
 
 	public static void start(Context context) {
+		start(context, true, true);
+	}
+
+	public static void start(Context context, boolean advertise, boolean receive) {
 		checkInit();
-
-		AppConfigManager.getInstance(context).setTracingEnabled(true);
-
+		AppConfigManager.getInstance(context).setAdvertisingEnabled(advertise);
+		AppConfigManager.getInstance(context).setReceivingEnabled(receive);
 		Intent intent = new Intent(context, TracingService.class).setAction(TracingService.ACTION_START);
+		intent.putExtra(TracingService.EXTRA_ADVERTISE, advertise);
+		intent.putExtra(TracingService.EXTRA_RECEIVE, receive);
 		ContextCompat.startForegroundService(context, intent);
 		SyncWorker.startSyncWorker(context);
 	}
 
 	public static boolean isStarted(Context context) {
 		checkInit();
-		return AppConfigManager.getInstance(context).isTracingEnabled();
+		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
+		return appConfigManager.isAdvertisingEnabled() || appConfigManager.isReceivingEnabled();
 	}
 
 	public static void sync(Context context) throws IOException, ResponseException {
@@ -86,7 +94,8 @@ public class STARTracing {
 		}
 		return new TracingStatus(
 				database.getHandshakes().size(),
-				appConfigManager.isTracingEnabled(),
+				appConfigManager.isAdvertisingEnabled(),
+				appConfigManager.isReceivingEnabled(),
 				database.wasContactExposed(),
 				appConfigManager.getLastSyncDate(),
 				appConfigManager.getAmIExposed(),
@@ -114,7 +123,9 @@ public class STARTracing {
 	public static void stop(Context context) {
 		checkInit();
 
-		AppConfigManager.getInstance(context).setTracingEnabled(false);
+		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
+		appConfigManager.setAdvertisingEnabled(false);
+		appConfigManager.setReceivingEnabled(false);
 
 		Intent intent = new Intent(context, TracingService.class).setAction(TracingService.ACTION_STOP);
 		context.stopService(intent);

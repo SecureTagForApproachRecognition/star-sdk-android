@@ -29,6 +29,9 @@ public class TracingService extends Service {
 	public static final String ACTION_START = TracingService.class.getCanonicalName() + ".ACTION_START";
 	public static final String ACTION_STOP = TracingService.class.getCanonicalName() + ".ACTION_STOP";
 
+	public static final String EXTRA_ADVERTISE = TracingService.class.getCanonicalName() + ".EXTRA_ADVERTISE";
+	public static final String EXTRA_RECEIVE = TracingService.class.getCanonicalName() + ".EXTRA_RECEIVE";
+
 	public static final long SCAN_INTERVAL = 5 * 60 * 1000L;
 	private static final long SCAN_DURATION = 30 * 1000L;
 
@@ -40,6 +43,9 @@ public class TracingService extends Service {
 
 	private BleServer bleServer;
 	private BleClient bleClient;
+
+	private boolean startAdvertising;
+	private boolean startReceiveing;
 
 	public TracingService() { }
 
@@ -60,6 +66,9 @@ public class TracingService extends Service {
 		LogHelper.append("service started");
 
 		Log.d("TracingService", "onHandleIntent() with " + intent.getAction());
+
+		startAdvertising = intent.getBooleanExtra(EXTRA_ADVERTISE, true);
+		startReceiveing = intent.getBooleanExtra(EXTRA_RECEIVE, true);
 
 		if (ACTION_START.equals(intent.getAction())) {
 			startForeground(NOTIFICATION_ID, createForegroundNotification());
@@ -164,9 +173,11 @@ public class TracingService extends Service {
 
 	private void startServer() {
 		stopServer();
-		bleServer = new BleServer(this);
-		bleServer.start();
-		bleServer.startAdvertising();
+		if (startAdvertising) {
+			bleServer = new BleServer(this);
+			bleServer.start();
+			bleServer.startAdvertising();
+		}
 	}
 
 	private void stopServer() {
@@ -178,8 +189,10 @@ public class TracingService extends Service {
 
 	private void startClient() {
 		stopClient();
-		bleClient = new BleClient(this);
-		bleClient.start();
+		if (startReceiveing) {
+			bleClient = new BleClient(this);
+			bleClient.start();
+		}
 	}
 
 	private void stopClient() {
