@@ -30,10 +30,15 @@ public class STARTracing {
 	private static String appId;
 
 	public static void init(Context context, String appId) {
+		init(context, appId, false);
+	}
+
+	public static void init(Context context, String appId, boolean enableDevMode) {
 		if (ProcessUtil.isMainProcess(context)) {
 			STARTracing.appId = appId;
 			AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
 			appConfigManager.setAppId(appId);
+			appConfigManager.setDevModeEnabled(enableDevMode);
 			appConfigManager.triggerLoad();
 
 			STARModule.getInstance(context).init();
@@ -125,11 +130,6 @@ public class STARTracing {
 	public static IntentFilter getUpdateIntentFilter() {
 		IntentFilter intentFilter = new IntentFilter(STARTracing.UPDATE_INTENT_ACTION);
 		return intentFilter;
-	}
-
-	public static void setDevModeEnabled(Context context, boolean enable) {
-		checkInit();
-		AppConfigManager.getInstance(context).setDevModeEnabled(enable);
 	}
 
 	public static boolean isDevModeEnabled(Context context) {
