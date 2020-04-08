@@ -15,13 +15,11 @@
 		<service
 			android:name="ch.ubique.android.starsdk.TracingService"
 			android:enabled="true"
-			android:foregroundServiceType="location"
-			android:process="ch.ubique.android.starsdk.scanningprocess" />
+			android:foregroundServiceType="location" />
 
 		<receiver
 			android:name="ch.ubique.android.starsdk.TracingServiceBroadcastReceiver"
-			android:enabled="true"
-			android:process="ch.ubique.android.starsdk.scanningprocess">
+			android:enabled="true">
 			<intent-filter>
 				<action android:name="android.intent.action.BOOT_COMPLETED" />
 				<action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
