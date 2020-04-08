@@ -14,6 +14,9 @@ import retrofit2.http.GET;
 
 interface DiscoveryService {
 
+	@GET("discovery_dev.json")
+	Call<ApplicationsList> getDiscoveryDev();
+
 	@GET("discovery.json")
 	Call<ApplicationsList> getDiscovery();
 
