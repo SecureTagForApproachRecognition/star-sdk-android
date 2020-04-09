@@ -1,53 +1,65 @@
 package ch.ubique.android.starsdk.sample.logs;
 
 import android.os.Bundle;
-import android.view.LayoutInflater;
+import android.os.Handler;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.List;
+
+import ch.ubique.android.starsdk.logger.LogEntry;
+import ch.ubique.android.starsdk.logger.Logger;
 import ch.ubique.android.starsdk.sample.R;
-import ch.ubique.android.starsdk.util.LogHelper;
 
 public class LogsFragment extends Fragment {
 
-	TextView logTextView;
+	private Handler handler = new Handler();
+	private Runnable updateLogsRunnable;
 
 	public static LogsFragment newInstance() {
 		return new LogsFragment();
 	}
 
-	@Nullable
-	@Override
-	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-			@Nullable Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.fragment_logs, container, false);
+	public LogsFragment() {
+		super(R.layout.fragment_logs);
 	}
 
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 
-		logTextView = view.findViewById(R.id.logs);
-		LogHelper.init(getActivity().getApplicationContext());
+		RecyclerView logsList = view.findViewById(R.id.logs_list);
+
+		LinearLayoutManager layoutManager = (LinearLayoutManager) logsList.getLayoutManager();
+
+		LogsAdapter logsAdapter = new LogsAdapter(getContext());
+		logsList.setAdapter(logsAdapter);
+
+		updateLogsRunnable = () -> {
+			boolean isAtBottom = layoutManager.findLastCompletelyVisibleItemPosition() == logsAdapter.getItemCount() - 1;
+
+			List<LogEntry> logs = Logger.getLogs(logsAdapter.getLastLogTime() + 1);
+			logsAdapter.appendLogs(logs);
+
+			if (isAtBottom) {
+				logsList.smoothScrollToPosition(logsAdapter.getItemCount() - 1);
+			}
+
+			handler.postDelayed(updateLogsRunnable, 2 * 1000L);
+		};
 		updateLogsRunnable.run();
 	}
 
-	private Runnable updateLogsRunnable = new Runnable() {
-		@Override
-		public void run() {
-			logTextView.setText(LogHelper.getLog());
-			logTextView.postDelayed(updateLogsRunnable, 10 * 1000L);
-		}
-	};
 
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
-		logTextView.removeCallbacks(updateLogsRunnable);
+
+		handler.removeCallbacks(updateLogsRunnable);
 	}
 
 }

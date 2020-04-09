@@ -4,6 +4,8 @@ import android.content.Context;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Logger {
 
@@ -43,6 +45,20 @@ public class Logger {
 		StringWriter sw = new StringWriter();
 		throwable.printStackTrace(new PrintWriter(sw));
 		e(tag, sw.toString());
+	}
+
+	public static List<LogEntry> getLogs(long sinceTime) {
+		if (instance != null) {
+			return instance.database.getLogsSince(sinceTime);
+		} else {
+			return new ArrayList<>();
+		}
+	}
+
+	public static void clear() {
+		if (instance != null) {
+			instance.database.clear();
+		}
 	}
 
 	private void log(LogLevel level, String tag, String message) {

@@ -23,7 +23,6 @@ import androidx.core.app.NotificationCompat;
 import ch.ubique.android.starsdk.gatt.BleClient;
 import ch.ubique.android.starsdk.gatt.BleServer;
 import ch.ubique.android.starsdk.logger.Logger;
-import ch.ubique.android.starsdk.util.LogHelper;
 
 public class TracingService extends Service {
 
