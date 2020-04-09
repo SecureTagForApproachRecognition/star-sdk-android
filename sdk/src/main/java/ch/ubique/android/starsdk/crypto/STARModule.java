@@ -5,7 +5,6 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk.crypto;
 
 import android.content.Context;
@@ -31,6 +30,7 @@ public class STARModule implements STARInterface {
 	private static String KEY_ALIAS;
 	private static final String KEY_ENTRY = "STAR_KEY";
 	private static final int interval = 60;
+	private static final int KEY_LENGTH = 26;
 	private static STARModule instance;
 	private KeyStore ks;
 	private SharedPreferences esp;
@@ -80,11 +80,12 @@ public class STARModule implements STARInterface {
 		try {
 			Integer counter = (int) Math.floor(System.currentTimeMillis() / 1000 / interval);
 			byte[] timestamp = intToByteArray(counter);
-
 			byte[] hmac = hmac(getSecretKey(), timestamp);
-			byte[] star = new byte[timestamp.length + hmac.length];
-			System.arraycopy(timestamp, 0, star, 0, timestamp.length);
-			System.arraycopy(hmac, 0, star, timestamp.length, hmac.length);
+			byte[] star = new byte[Math.min(KEY_LENGTH, timestamp.length + hmac.length)];
+
+			int lenTimestamp = Math.min(KEY_LENGTH, timestamp.length);
+			System.arraycopy(timestamp, 0, star, 0, lenTimestamp);
+			System.arraycopy(hmac, 0, star, lenTimestamp, KEY_LENGTH - lenTimestamp);
 			return star;
 		} catch (Exception ex) {
 			ex.printStackTrace();
