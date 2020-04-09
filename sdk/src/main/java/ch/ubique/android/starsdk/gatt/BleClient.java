@@ -24,7 +24,8 @@ import java.util.List;
 import java.util.Map;
 
 import ch.ubique.android.starsdk.BroadcastHelper;
-import ch.ubique.android.starsdk.TracingService;
+import ch.ubique.android.starsdk.crypto.STARModule;
+import ch.ubique.android.starsdk.database.Database;
 import ch.ubique.android.starsdk.logger.Logger;
 
 public class BleClient {
@@ -119,15 +120,18 @@ public class BleClient {
 			Logger.d(TAG, "Distance to device (" + scanResult.getDevice().getAddress() + "): " + String.valueOf(distance) +
 					"m");
 
-			byte[] payload = scanResult.getScanRecord().getManufacturerSpecificData(BleServer.MANUFACTURER_ID);
-			if (payload != null) { // if Android, optimize (meaning: send/read payload directly in the SCAN_RESP)
-				publishMessage(payload, bluetoothDevice.getAddress());
-				return;
-			}
-
 			deviceLastConnected.put(bluetoothDevice.getAddress(), System.currentTimeMillis());
 
-			gattConnectionThread.addTask(new GattConnectionTask(context, bluetoothDevice, scanResult));
+			byte[] payload = scanResult.getScanRecord().getManufacturerSpecificData(BleServer.MANUFACTURER_ID);
+			if (payload != null && payload.length == STARModule.KEY_LENGTH) {
+				// if Android, optimize (meaning: send/read payload directly in the SCAN_RESP)
+				Logger.d(TAG, "read star payload from manufatorer data");
+				new Database(context)
+						.addHandshake(context, payload, "MFD" + scanResult.getDevice().getAddress(), power, scanResult.getRssi(),
+								System.currentTimeMillis());
+			} else {
+				gattConnectionThread.addTask(new GattConnectionTask(context, bluetoothDevice, scanResult));
+			}
 		} catch (Throwable t) {
 			t.printStackTrace();
 			Logger.e(TAG, t);
