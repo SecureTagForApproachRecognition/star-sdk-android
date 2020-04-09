@@ -8,14 +8,16 @@
 
 package ch.ubique.android.starsdk.crypto;
 
+import java.util.Date;
+
 public interface STARInterface {
 	boolean init();
 
-	byte[] newTOTP();
+	byte[] getCurrentEphId();
 
-	boolean validate(byte[] key, byte[] star);
+	boolean isKeyMatchingEphId(byte[] key, byte[] ephId);
 
-	String getSecretKeyForBackend();
+	String getSecretKeyForBackend(Date date);
 
 	void reset();
 

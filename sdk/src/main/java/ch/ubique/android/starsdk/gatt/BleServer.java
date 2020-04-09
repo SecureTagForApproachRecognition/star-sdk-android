@@ -114,7 +114,7 @@ public class BleServer {
 	}
 
 	private byte[] getAdvertiseData() {
-		byte[] advertiseData = STARModule.getInstance(context).newTOTP();
+		byte[] advertiseData = STARModule.getInstance(context).getCurrentEphId();
 		String calibrationTestDeviceName = AppConfigManager.getInstance(context).getCalibrationTestDeviceName();
 		if (calibrationTestDeviceName != null) {
 			byte[] nameBytes = calibrationTestDeviceName.getBytes();

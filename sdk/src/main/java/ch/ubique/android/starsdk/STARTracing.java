@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Date;
 
 import ch.ubique.android.starsdk.backend.CallbackListener;
 import ch.ubique.android.starsdk.backend.ResponseException;
@@ -111,21 +112,12 @@ public class STARTracing {
 		);
 	}
 
-	public static void sendIWasExposed(Context context, Object customData, CallbackListener<Void> callback) {
+	public static void sendIWasExposed(Context context, Date date, Object customData, CallbackListener<Void> callback) {
 		checkInit();
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
 		appConfigManager.setAmIExposed(true);
 		appConfigManager.getBackendRepository(context)
-				.addExposee(new Exposee(STARModule.getInstance(context).getSecretKeyForBackend()), callback);
-	}
-
-	public static void sendIWasHealed(Context context, Object customData, CallbackListener<Void> callback) {
-		checkInit();
-		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
-		appConfigManager.setAmIExposed(false);
-		appConfigManager.getBackendRepository(context)
-				.removeExposee(new Exposee(STARModule.getInstance(context).getSecretKeyForBackend()), callback);
-		STARModule.getInstance(context).reset();
+				.addExposee(new Exposee(STARModule.getInstance(context).getSecretKeyForBackend(date)), callback);
 	}
 
 	public static void stop(Context context) {

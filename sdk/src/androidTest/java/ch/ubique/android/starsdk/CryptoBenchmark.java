@@ -25,16 +25,16 @@ public class CryptoBenchmark {
     public BenchmarkRule benchmarkRule = new BenchmarkRule();
 
     @Test
-    public void hmac_performance() {
+    public void key_matching_performance() {
         final BenchmarkState state = benchmarkRule.getState();
         STARModule module = STARModule.getInstance(InstrumentationRegistry.getInstrumentation().getContext());
         module.reset();
         if(module.init()) {
-            byte[] star = module.newTOTP();
+            byte[] star = module.getCurrentEphId();
             int i =0;
             while(state.keepRunning()) {
                 String key = "much longer key which is used for the hash functino but this should not have an influence" + Integer.toHexString(i);
-                boolean assertion = module.validate(key.getBytes(), star);
+                boolean assertion = module.isKeyMatchingEphId(key.getBytes(), star);
                 i += 1;
             }
         }

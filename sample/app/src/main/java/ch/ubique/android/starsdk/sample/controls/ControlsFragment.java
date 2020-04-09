@@ -31,7 +31,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -291,13 +290,13 @@ public class ControlsFragment extends Fragment {
 		buttonSaveDb.setEnabled(!isRunning);
 
 		Button buttonReportExposed = view.findViewById(R.id.home_button_report_exposed);
-		boolean isExposed = status.isAm_i_exposed();
-		buttonReportExposed.setText(getString(isExposed ? R.string.button_report_healed : R.string.button_report_exposed));
+		buttonReportExposed.setEnabled(status.isAm_i_exposed());
+		buttonReportExposed.setText(R.string.button_report_exposed);
 		buttonReportExposed.setOnClickListener(
 				v -> DialogUtil
 						.showConfirmDialog(v.getContext(),
-								isExposed ? R.string.dialog_healed_title : R.string.dialog_expose_title,
-								(dialog, which) -> sendExposedUpdate(context, isExposed)));
+								R.string.dialog_expose_title,
+								(dialog, which) -> sendExposedUpdate(context)));
 
 		EditText deanonymizationDeviceId = view.findViewById(R.id.deanonymization_device_id);
 		Switch deanonymizationSwitch = view.findViewById(R.id.deanonymization_switch);
@@ -338,45 +337,26 @@ public class ControlsFragment extends Fragment {
 		return new SpannableString(builder);
 	}
 
-	private void sendExposedUpdate(Context context, boolean sendHeal) {
+	private void sendExposedUpdate(Context context) {
 		setExposeLoadingViewVisible(true);
-		if (sendHeal) {
-			STARTracing.sendIWasHealed(context, null, new CallbackListener<Void>() {
-				@Override
-				public void onSuccess(Void response) {
-					DialogUtil.showMessageDialog(context, getString(R.string.dialog_title_success),
-							getString(R.string.dialog_message_request_success));
-					setExposeLoadingViewVisible(false);
-					updateSdkStatus();
-				}
 
-				@Override
-				public void onError(Throwable throwable) {
-					DialogUtil.showMessageDialog(context, getString(R.string.dialog_title_error),
-							throwable.getLocalizedMessage());
-					Log.e(TAG, throwable.getMessage(), throwable);
-					setExposeLoadingViewVisible(false);
-				}
-			});
-		} else {
-			STARTracing.sendIWasExposed(context, null, new CallbackListener<Void>() {
-				@Override
-				public void onSuccess(Void response) {
-					DialogUtil.showMessageDialog(context, getString(R.string.dialog_title_success),
-							getString(R.string.dialog_message_request_success));
-					setExposeLoadingViewVisible(false);
-					updateSdkStatus();
-				}
+		STARTracing.sendIWasExposed(context, new Date(), null, new CallbackListener<Void>() {
+			@Override
+			public void onSuccess(Void response) {
+				DialogUtil.showMessageDialog(context, getString(R.string.dialog_title_success),
+						getString(R.string.dialog_message_request_success));
+				setExposeLoadingViewVisible(false);
+				updateSdkStatus();
+			}
 
-				@Override
-				public void onError(Throwable throwable) {
-					DialogUtil.showMessageDialog(context, getString(R.string.dialog_title_error),
-							throwable.getLocalizedMessage());
-					Log.e(TAG, throwable.getMessage(), throwable);
-					setExposeLoadingViewVisible(false);
-				}
-			});
-		}
+			@Override
+			public void onError(Throwable throwable) {
+				DialogUtil.showMessageDialog(context, getString(R.string.dialog_title_error),
+						throwable.getLocalizedMessage());
+				Log.e(TAG, throwable.getMessage(), throwable);
+				setExposeLoadingViewVisible(false);
+			}
+		});
 	}
 
 	private void setExposeLoadingViewVisible(boolean visible) {

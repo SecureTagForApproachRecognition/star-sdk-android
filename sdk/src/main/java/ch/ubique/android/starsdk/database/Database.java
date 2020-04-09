@@ -11,10 +11,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.net.Uri;
 import androidx.annotation.NonNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -52,7 +50,8 @@ public class Database {
 							null, HandShakes.ID);
 			while (cursor.moveToNext()) {
 				byte[] star = cursor.getBlob(cursor.getColumnIndexOrThrow(HandShakes.STAR));
-				if (starModule.validate(key, star)) {
+				//TODO this check needs to take the day into account
+				if (starModule.isKeyMatchingEphId(key, star)) {
 					int id = cursor.getInt(cursor.getColumnIndexOrThrow(HandShakes.ID));
 					db.update(HandShakes.TABLE_NAME, updateValues, HandShakes.ID + "=" + id, null);
 					BroadcastHelper.sendUpdateBroadcast(context);
@@ -97,7 +96,8 @@ public class Database {
 		getKnownCases(response -> {
 			databaseThread.post(() -> {
 				for (KnownCase knownCase : response) {
-					if (starModule.validate(knownCase.getKey(), star)) {
+					//TODO this check needs to take the day into account
+					if (starModule.isKeyMatchingEphId(knownCase.getKey(), star)) {
 						values.put(HandShakes.ASSOCIATED_KNOWN_CASE, knownCase.getId());
 						break;
 					}

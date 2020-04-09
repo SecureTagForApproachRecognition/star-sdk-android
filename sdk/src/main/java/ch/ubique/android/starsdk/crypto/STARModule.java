@@ -9,30 +9,46 @@ package ch.ubique.android.starsdk.crypto;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.security.keystore.KeyGenParameterSpec;
 import android.util.Base64;
+import android.util.Pair;
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKeys;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.KeyStore;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.google.gson.Gson;
+
+import static ch.ubique.android.starsdk.crypto.TimeUtils.convertToDay;
+import static ch.ubique.android.starsdk.crypto.TimeUtils.getNextDay;
+
 public class STARModule implements STARInterface {
-	private static final String TAG = "STARModule";
-	private static String KEY_ALIAS;
-	private static final String KEY_ENTRY = "STAR_KEY";
-	private static final int interval = 60;
+
 	public static final int KEY_LENGTH = 26;
+
+	private static final int NUMBER_OF_DAYS_TO_KEEP_SK = 21;
+	private static final int NUMBER_OF_EPOCHS_PER_DAY = 24 * 12;
+	private static final int MILLISECONDS_PER_EPOCH = 24 * 60 * 60 * 1000 / NUMBER_OF_EPOCHS_PER_DAY;
+	//TODO set correct broadcast key
+	private static final byte[] BROADCAST_KEY = "TODOTODOTODOTODOTODOTODOTODOTODOTODO".getBytes();
+
+	private static final String KEY_SK_LIST_JSON = "SK_LIST_JSON";
 	private static STARModule instance;
-	private KeyStore ks;
 	private SharedPreferences esp;
 
 	private byte[] debugKey = "key".getBytes();
@@ -41,13 +57,13 @@ public class STARModule implements STARInterface {
 		if (instance == null) {
 			instance = new STARModule();
 			try {
-				KEY_ALIAS = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC);
+				String KEY_ALIAS = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC);
 				instance.esp = EncryptedSharedPreferences.create("star_store",
 						KEY_ALIAS,
 						context,
 						EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
 						EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM);
-			} catch (Exception ex) {
+			} catch (GeneralSecurityException | IOException ex) {
 				ex.printStackTrace();
 			}
 		}
@@ -57,17 +73,14 @@ public class STARModule implements STARInterface {
 	@Override
 	public boolean init() {
 		try {
-			String stringKey = esp.getString(KEY_ENTRY, null);
+			String stringKey = esp.getString(KEY_SK_LIST_JSON, null);
 			if (stringKey != null) return true; //key already exists
 
-			KeyGenParameterSpec spec = new KeyGenParameterSpec
-					.Builder(KEY_ALIAS, 0)
-					.build();
 			KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
 			SecretKey secretKey = keyGenerator.generateKey();
-			SharedPreferences.Editor editor = esp.edit();
-			editor.putString(KEY_ENTRY, Base64.encodeToString(secretKey.getEncoded(), Base64.NO_WRAP));
-			editor.commit();
+			SKList skList = new SKList();
+			skList.add(new Pair(convertToDay(System.currentTimeMillis()), secretKey.getEncoded()));
+			storeSKList(skList);
 			return true;
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -75,89 +88,109 @@ public class STARModule implements STARInterface {
 		return false;
 	}
 
-	@Override
-	public byte[] newTOTP() {
-		try {
-			Integer counter = (int) Math.floor(System.currentTimeMillis() / 1000 / interval);
-			byte[] timestamp = intToByteArray(counter);
-			byte[] hmac = hmac(getSecretKey(), timestamp);
-			byte[] star = new byte[Math.min(KEY_LENGTH, timestamp.length + hmac.length)];
+	private SKList getSKList() {
+		String skListJson = esp.getString(KEY_SK_LIST_JSON, null);
+		return new Gson().fromJson(skListJson, SKList.class);
+	}
 
-			int lenTimestamp = Math.min(KEY_LENGTH, timestamp.length);
-			System.arraycopy(timestamp, 0, star, 0, lenTimestamp);
-			System.arraycopy(hmac, 0, star, lenTimestamp, KEY_LENGTH - lenTimestamp);
-			return star;
-		} catch (Exception ex) {
-			ex.printStackTrace();
+	private void storeSKList(SKList skList) {
+		esp.edit().putString(KEY_SK_LIST_JSON, new Gson().toJson(skList)).commit();
+	}
+
+	private byte[] getSKt1(byte[] SKt0) {
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			byte[] SKt1 = digest.digest(SKt0);
+			return SKt1;
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("SHA-256 algorithm must be present!");
 		}
-		return new byte[0];
+	}
+
+	private void rotateSK() {
+		SKList skList = getSKList();
+		long nextDay = getNextDay(skList.get(0).first);
+		byte[] SKt1 = getSKt1(skList.get(0).second);
+		skList.add(0, new Pair(nextDay, SKt1));
+		List subList = skList.subList(0, Math.min(NUMBER_OF_DAYS_TO_KEEP_SK, skList.size()));
+		skList = new SKList();
+		skList.addAll(subList);
+		storeSKList(skList);
+	}
+
+	private byte[] getCurrentSK(long day) {
+		List<Pair<Long, byte[]>> SKList = getSKList();
+		while (SKList.get(0).first < day) {
+			rotateSK();
+			SKList = getSKList();
+		}
+		assert SKList.get(0).first == day;
+		return SKList.get(0).second;
+	}
+
+	private List<byte[]> createEphIds(byte[] SK) {
+		try {
+			Mac mac = Mac.getInstance("HmacSHA256");
+			mac.init(new SecretKeySpec(SK, "HmacSHA256"));
+			mac.update(BROADCAST_KEY);
+			byte[] keyBytes = mac.doFinal();
+
+			byte[] emptyArray = new byte[KEY_LENGTH];
+
+			//generate EphIDs
+			SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+			Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
+			byte[] counter = new byte[16];
+			cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(counter));
+			ArrayList<byte[]> ephIds = new ArrayList<>();
+			for (int i = 0; i < NUMBER_OF_EPOCHS_PER_DAY; i++) {
+				ephIds.add(cipher.update(emptyArray));
+			}
+			return ephIds;
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException e) {
+			throw new IllegalStateException("HmacSHA256 and AES algorithms must be present!", e);
+		}
 	}
 
 	@Override
-	public boolean validate(byte[] key, byte[] star) {
-		try {
-			ByteBuffer buffer = ByteBuffer.wrap(star);
-			buffer.order(ByteOrder.BIG_ENDIAN);
-			byte[] counter = new byte[4];
-			buffer.get(counter);
-			byte[] hash = new byte[32];
-			buffer.get(hash);
+	public byte[] getCurrentEphId() {
+		long now = System.currentTimeMillis();
+		long currentDay = convertToDay(now);
+		byte[] SK = getCurrentSK(currentDay);
+		int counter = (int) (now - currentDay) / MILLISECONDS_PER_EPOCH;
+		return createEphIds(SK).get(counter);
+	}
 
-			byte[] hmac = hmac(key, counter);
-			return Arrays.equals(hmac, hash);
-		} catch (Exception ex) {
-			ex.printStackTrace();
+	@Override
+	public boolean isKeyMatchingEphId(byte[] key, byte[] ephId) {
+		for (byte[] id : createEphIds(key)) {
+			if (Arrays.equals(id, ephId)) {
+				return true;
+			}
 		}
 		return false;
 	}
 
 	@Override
-	public String getSecretKeyForBackend() {
-		return esp.getString(KEY_ENTRY, null);
-	}
-
-	public byte[] getSecretKey() {
-		try {
-			String secretKey = esp.getString(KEY_ENTRY, null);
-			if (secretKey == null) {
-				return new byte[0];
+	public String getSecretKeyForBackend(Date date) {
+		long day = convertToDay(date.getTime());
+		for (Pair<Long, byte[]> daySKPair : getSKList()) {
+			if (daySKPair.first == day) {
+				return new String(Base64.encode(daySKPair.second, Base64.NO_WRAP));
 			}
-
-			return Base64.decode(secretKey, Base64.NO_WRAP);
-		} catch (Exception ex) {
-			ex.printStackTrace();
 		}
-		return new byte[0];
+		return null;
 	}
 
 	@Override
 	public void reset() {
 		try {
 			SharedPreferences.Editor editor = esp.edit();
-			editor.remove(KEY_ENTRY);
+			editor.clear();
+			editor.commit();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-	}
-
-	private byte[] hmac(byte[] key, byte[] msg) throws NoSuchAlgorithmException, InvalidKeyException {
-		Mac mac = Mac.getInstance("HmacSHA256");
-		mac.init(new SecretKeySpec(key, "HmacSHA256"));
-		mac.update(msg);
-		return mac.doFinal();
-	}
-
-	private static byte[] intToByteArray(int a) {
-		byte[] ret = new byte[4];
-		ret[3] = (byte) (a & 0xFF);
-		ret[2] = (byte) ((a >> 8) & 0xFF);
-		ret[1] = (byte) ((a >> 16) & 0xFF);
-		ret[0] = (byte) ((a >> 24) & 0xFF);
-		return ret;
-	}
-
-	private static int byteArrayToInt(byte[] b) {
-		return (b[3] & 0xFF) + ((b[2] & 0xFF) << 8) + ((b[1] & 0xFF) << 16) + ((b[0] & 0xFF) << 24);
 	}
 
 }
