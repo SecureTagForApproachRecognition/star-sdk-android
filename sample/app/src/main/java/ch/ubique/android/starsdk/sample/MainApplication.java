@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.os.Build;
 
 import ch.ubique.android.starsdk.STARTracing;
+import ch.ubique.android.starsdk.logger.LogLevel;
+import ch.ubique.android.starsdk.logger.Logger;
 import ch.ubique.android.starsdk.sample.util.NotificationUtil;
 import ch.ubique.android.starsdk.sample.util.PreferencesUtil;
 import ch.ubique.android.starsdk.util.ProcessUtil;
@@ -23,6 +25,7 @@ public class MainApplication extends Application {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			NotificationUtil.createNotificationChannel(this);
 		}
+		Logger.init(getApplicationContext(), LogLevel.DEBUG);
 	}
 
 	@Override

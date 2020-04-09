@@ -20,7 +20,7 @@ import ch.ubique.android.starsdk.backend.ResponseException;
 import ch.ubique.android.starsdk.backend.models.Exposee;
 import ch.ubique.android.starsdk.crypto.STARModule;
 import ch.ubique.android.starsdk.database.Database;
-import ch.ubique.android.starsdk.util.LogHelper;
+import ch.ubique.android.starsdk.logger.Logger;
 import ch.ubique.android.starsdk.util.ProcessUtil;
 
 public class STARTracing {
@@ -171,7 +171,7 @@ public class STARTracing {
 		}
 
 		appConfigManager.clearPreferences();
-		LogHelper.clearLog(context);
+		Logger.clear();
 		Database db = new Database(context);
 		db.recreateTables(response -> onDeleteListener.run());
 	}

@@ -10,9 +10,11 @@ import android.util.Log;
 import java.util.Arrays;
 
 import ch.ubique.android.starsdk.database.Database;
-import ch.ubique.android.starsdk.util.LogHelper;
+import ch.ubique.android.starsdk.logger.Logger;
 
 public class GattConnectionTask {
+
+	private static final String TAG = "BleClient";
 
 	private static final long GATT_READ_TIMEOUT = 10 * 1000l;
 
@@ -30,9 +32,8 @@ public class GattConnectionTask {
 	}
 
 	public void execute() {
-
-		Log.d("BleClient", "connecting GATT...");
-		LogHelper.append("Trying to connect to: " + bluetoothDevice.getAddress());
+		Log.d(TAG, "connecting GATT...");
+		Logger.i(TAG, "Trying to connect to: " + bluetoothDevice.getAddress());
 
 		final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
 			@Override
@@ -43,11 +44,11 @@ public class GattConnectionTask {
 				} else if (newState == BluetoothProfile.STATE_CONNECTED) {
 					Log.d("BluetoothGattCallback", "connected " + status);
 					Log.d("BluetoothGattCallback", "requesting mtu...");
-					LogHelper.append("Gatt Connection established");
+					Logger.i("BluetoothGattCallback", "Gatt Connection established");
 					gatt.requestMtu(512);
 				} else if (newState == BluetoothProfile.STATE_DISCONNECTED || newState == BluetoothProfile.STATE_DISCONNECTING) {
 					Log.d("BluetoothGattCallback", "disconnected " + status);
-					LogHelper.append("Gatt Connection disconnected " + status);
+					Logger.i("BluetoothGattCallback", "Gatt Connection disconnected " + status);
 					finish();
 				}
 			}
@@ -64,7 +65,7 @@ public class GattConnectionTask {
 
 				if (service == null) {
 					Log.e("BluetoothGattCallback", "No GATT service for " + BleServer.SERVICE_UUID + " found, status=" + status);
-					LogHelper.append("Could not find our GATT service");
+					Logger.i("BluetoothGattCallback", "Could not find our GATT service");
 					finish();
 					return;
 				}
@@ -76,9 +77,9 @@ public class GattConnectionTask {
 				boolean initiatedRead = gatt.readCharacteristic(characteristic);
 				if (!initiatedRead) {
 					Log.e("BluetoothGattCallback", "Failed to initiate characteristic read");
-					LogHelper.append("Failed to read");
+					Logger.e("BluetoothGattCallback", "Failed to read");
 				} else {
-					LogHelper.append("Read initiated");
+					Logger.d("BluetoothGattCallback", "Read initiated");
 				}
 			}
 
@@ -98,7 +99,7 @@ public class GattConnectionTask {
 					}
 				}
 				finish();
-				LogHelper.append("Closed Gatt Connection");
+				Logger.d("BluetoothGattCallback", "Closed Gatt Connection");
 			}
 		};
 
@@ -116,7 +117,7 @@ public class GattConnectionTask {
 			String base64String = new String(Base64.encode(starValue, Base64.NO_WRAP));
 			Log.e("received", base64String);
 			new Database(context).addHandshake(context, starValue, macAddress, rxPowerLevel, rssi, System.currentTimeMillis());
-			LogHelper.append(base64String);
+			Logger.d(TAG, "received " + base64String);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -134,15 +135,15 @@ public class GattConnectionTask {
 
 	public void finish() {
 		if (bluetoothGatt != null) {
-			Log.d("BleClient", "closeGattAndConnectToNextDevice (disconnect() and then close())");
-			LogHelper.append("Calling disconnect() and close(): " + bluetoothGatt.getDevice().getAddress());
+			Log.d(TAG, "closeGattAndConnectToNextDevice (disconnect() and then close())");
+			Logger.d(TAG, "Calling disconnect() and close(): " + bluetoothGatt.getDevice().getAddress());
 			// Order matters! Call disconnect() before close() as the latter de-registers our client
 			// and essentially makes disconnect a NOP.
 			bluetoothGatt.disconnect();
 			bluetoothGatt.close();
 			bluetoothGatt = null;
 		}
-		LogHelper.append("Reset and wait for next BLE device");
+		Logger.i(TAG, "Reset and wait for next BLE device");
 	}
 
 }
