@@ -31,9 +31,8 @@ public class TracingService extends Service {
 
 	public static final String EXTRA_ADVERTISE = TracingService.class.getCanonicalName() + ".EXTRA_ADVERTISE";
 	public static final String EXTRA_RECEIVE = TracingService.class.getCanonicalName() + ".EXTRA_RECEIVE";
-
-	public static final long SCAN_INTERVAL = 5 * 60 * 1000L;
-	private static final long SCAN_DURATION = 30 * 1000L;
+	public static final String EXTRA_SCAN_INTERVAL = TracingService.class.getCanonicalName() + ".EXTRA_SCAN_INTERVAL";
+	public static final String EXTRA_SCAN_DURATION = TracingService.class.getCanonicalName() + ".EXTRA_SCAN_DURATION";
 
 	private static String NOTIFICATION_CHANNEL_ID = "star_tracing_service";
 	private static int NOTIFICATION_ID = 1827;
@@ -46,6 +45,8 @@ public class TracingService extends Service {
 
 	private boolean startAdvertising;
 	private boolean startReceiveing;
+	private long scanInterval;
+	private long scanDuration;
 
 	public TracingService() { }
 
@@ -66,6 +67,9 @@ public class TracingService extends Service {
 		LogHelper.append("service started");
 
 		Log.d("TracingService", "onHandleIntent() with " + intent.getAction());
+
+		scanInterval = intent.getLongExtra(EXTRA_SCAN_INTERVAL, 5 * 60 * 1000);
+		scanDuration = intent.getLongExtra(EXTRA_SCAN_DURATION, 30 * 1000);
 
 		startAdvertising = intent.getBooleanExtra(EXTRA_ADVERTISE, true);
 		startReceiveing = intent.getBooleanExtra(EXTRA_RECEIVE, true);
@@ -136,12 +140,12 @@ public class TracingService extends Service {
 			LogHelper.append(t);
 		}
 
-		handler.postDelayed(() -> {scheduleNextRun(this);}, SCAN_DURATION);
+		handler.postDelayed(() -> {scheduleNextRun(this, scanInterval);}, scanDuration);
 	}
 
-	public static void scheduleNextRun(Context context) {
+	public static void scheduleNextRun(Context context, long scanInterval) {
 		long now = System.currentTimeMillis();
-		long delay = SCAN_INTERVAL - (now % SCAN_INTERVAL);
+		long delay = scanInterval - (now % scanInterval);
 		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 		Intent intent = new Intent(context, TracingServiceBroadcastReceiver.class);
 		PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -191,6 +195,7 @@ public class TracingService extends Service {
 		stopClient();
 		if (startReceiveing) {
 			bleClient = new BleClient(this);
+			bleClient.setMinTimeToReconnectToSameDevice(scanInterval);
 			bleClient.start();
 		}
 	}

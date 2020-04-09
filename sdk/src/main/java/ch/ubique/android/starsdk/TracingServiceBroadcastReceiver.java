@@ -25,10 +25,14 @@ public class TracingServiceBroadcastReceiver extends BroadcastReceiver {
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
 		boolean advertising = appConfigManager.isAdvertisingEnabled();
 		boolean receiving = appConfigManager.isReceivingEnabled();
+		long scanInterval = appConfigManager.getScanInterval();
+		long scanDuration = appConfigManager.getScanDuration();
 		if (advertising || receiving) {
 			Intent intent = new Intent(context, TracingService.class).setAction(TracingService.ACTION_START);
 			intent.putExtra(TracingService.EXTRA_ADVERTISE, advertising);
 			intent.putExtra(TracingService.EXTRA_RECEIVE, receiving);
+			intent.putExtra(TracingService.EXTRA_SCAN_INTERVAL, scanInterval);
+			intent.putExtra(TracingService.EXTRA_SCAN_DURATION, scanDuration);
 			ContextCompat.startForegroundService(context, intent);
 		}
 	}

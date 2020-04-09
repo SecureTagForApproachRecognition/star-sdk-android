@@ -13,6 +13,15 @@
 		<item name="android:textColor">@color/textPrimary</item>
 	</style>
 
+	<style name="Sample.Text.Light">
+		<item name="android:textColor">@color/greyDark</item>
+	</style>
+
+	<style name="Sample.Text.Title">
+		<item name="android:textSize">@dimen/text_size_large</item>
+		<item name="android:textStyle">bold</item>
+	</style>
+
 	<style name="Sample.Button" parent="Widget.MaterialComponents.Button">
 		<item name="android:textAppearance">@style/Sample.Text</item>
 		<item name="android:textAllCaps">true</item>

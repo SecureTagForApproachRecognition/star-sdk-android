@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 import ch.ubique.android.starsdk.BroadcastHelper;
-import ch.ubique.android.starsdk.TracingService;
 import ch.ubique.android.starsdk.util.LogHelper;
 
 public class BleClient {
@@ -33,11 +32,16 @@ public class BleClient {
 	private BluetoothLeScanner bleScanner;
 	private ScanCallback bleScanCallback;
 	private GattConnectionThread gattConnectionThread;
+	private long minTimeToReconnectToSameDevice = 5 * 60 * 1000;
 
 	public BleClient(Context context) {
 		this.context = context;
 		gattConnectionThread = new GattConnectionThread();
 		gattConnectionThread.start();
+	}
+
+	public void setMinTimeToReconnectToSameDevice(long minTimeToReconnectToSameDevice) {
+		this.minTimeToReconnectToSameDevice = minTimeToReconnectToSameDevice;
 	}
 
 	public void start() {
@@ -89,7 +93,6 @@ public class BleClient {
 		LogHelper.append("bleScanner started");
 	}
 
-	public static final long MINIMUM_TIME_TO_RECONNECT_TO_SAME_DEVICE = TracingService.SCAN_INTERVAL;
 	public static final Map<String, Long> deviceLastConnected = new HashMap<>();
 
 	public void onDeviceFound(ScanResult scanResult) {
@@ -100,7 +103,7 @@ public class BleClient {
 
 			if (deviceLastConnected.get(bluetoothDevice.getAddress()) != null &&
 					deviceLastConnected.get(bluetoothDevice.getAddress()) > System.currentTimeMillis() -
-							MINIMUM_TIME_TO_RECONNECT_TO_SAME_DEVICE) {
+							minTimeToReconnectToSameDevice) {
 				Log.d("BleClient", "skipped");
 				return;
 			}

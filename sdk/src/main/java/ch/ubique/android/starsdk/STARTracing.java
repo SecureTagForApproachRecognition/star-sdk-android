@@ -63,11 +63,16 @@ public class STARTracing {
 
 	public static void start(Context context, boolean advertise, boolean receive) {
 		checkInit();
-		AppConfigManager.getInstance(context).setAdvertisingEnabled(advertise);
-		AppConfigManager.getInstance(context).setReceivingEnabled(receive);
+		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
+		appConfigManager.setAdvertisingEnabled(advertise);
+		appConfigManager.setReceivingEnabled(receive);
+		long scanInterval = appConfigManager.getScanInterval();
+		long scanDuration = appConfigManager.getScanDuration();
 		Intent intent = new Intent(context, TracingService.class).setAction(TracingService.ACTION_START);
 		intent.putExtra(TracingService.EXTRA_ADVERTISE, advertise);
 		intent.putExtra(TracingService.EXTRA_RECEIVE, receive);
+		intent.putExtra(TracingService.EXTRA_SCAN_INTERVAL, scanInterval);
+		intent.putExtra(TracingService.EXTRA_SCAN_DURATION, scanDuration);
 		ContextCompat.startForegroundService(context, intent);
 		SyncWorker.startSyncWorker(context);
 	}
@@ -132,12 +137,6 @@ public class STARTracing {
 		SyncWorker.stopSyncWorker(context);
 	}
 
-	public static void reset(Context context) {
-		checkInit();
-		//TODO clear all data
-		STARModule.getInstance(context).reset();
-	}
-
 	public static IntentFilter getUpdateIntentFilter() {
 		IntentFilter intentFilter = new IntentFilter(STARTracing.UPDATE_INTENT_ACTION);
 		return intentFilter;
@@ -170,6 +169,7 @@ public class STARTracing {
 			throw new IllegalStateException("Tracking must be stopped for clearing the local data");
 		}
 
+		STARModule.getInstance(context).reset();
 		appConfigManager.clearPreferences();
 		LogHelper.clearLog(context);
 		Database db = new Database(context);

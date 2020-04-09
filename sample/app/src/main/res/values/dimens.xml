@@ -6,6 +6,7 @@
 	<dimen name="spacing_huge">40dp</dimen>
 
 	<dimen name="text_size_normal">16sp</dimen>
+	<dimen name="text_size_large">20sp</dimen>
 
 	<dimen name="button_outline_stroke">2dp</dimen>
 

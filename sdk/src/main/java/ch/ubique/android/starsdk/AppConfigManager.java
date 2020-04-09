@@ -33,6 +33,10 @@ public class AppConfigManager {
 
 	public static final int CALIBRATION_TEST_DEVICE_NAME_LENGTH = 4;
 
+	public static final long DEFAULT_SCAN_INTERVAL = 5 * 60 * 1000L;
+	private static final long DEFAULT_SCAN_DURATION = 30 * 1000L;
+	private static final int DEFAULT_BLUETOOTH_POWER_LEVEL = 4;
+
 	private static final String PREF_NAME = "appConfigPreferences";
 	private static final String PREF_APPLICATION_LIST = "applicationList";
 	private static final String PREF_ADVERTISING_ENABLED = "advertisingEnabled";
@@ -40,6 +44,9 @@ public class AppConfigManager {
 	private static final String PREF_LAST_SYNC_DATE = "lastSyncDate";
 	private static final String PREF_AM_I_EXPOSED = "amIExposed";
 	private static final String PREF_CALIBRATION_TEST_DEVICE_NAME = "calibrationTestDeviceName";
+	private static final String PREF_SCAN_INTERVAL = "scanInterval";
+	private static final String PREF_SCAN_DURATION = "scanDuration";
+	private static final String PREF_ADVERTISEMENT_POWER_LEVEL = "advertisementPowerLevel";
 
 	private String appId;
 	private boolean isDev;
@@ -144,6 +151,30 @@ public class AppConfigManager {
 
 	public String getCalibrationTestDeviceName() {
 		return sharedPrefs.getString(PREF_CALIBRATION_TEST_DEVICE_NAME, null);
+	}
+
+	public void setScanDuration(long scanDuration) {
+		sharedPrefs.edit().putLong(PREF_SCAN_DURATION, scanDuration).commit();
+	}
+
+	public long getScanDuration() {
+		return sharedPrefs.getLong(PREF_SCAN_DURATION, DEFAULT_SCAN_DURATION);
+	}
+
+	public void setScanInterval(long scanInterval) {
+		sharedPrefs.edit().putLong(PREF_SCAN_INTERVAL, scanInterval).commit();
+	}
+
+	public long getScanInterval() {
+		return sharedPrefs.getLong(PREF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL);
+	}
+
+	public void setBluetoothPowerLevel(BluetoothPowerLevel powerLevel) {
+		sharedPrefs.edit().putInt(PREF_ADVERTISEMENT_POWER_LEVEL, powerLevel.ordinal()).commit();
+	}
+
+	public BluetoothPowerLevel getBluetoothPowerLevel() {
+		return BluetoothPowerLevel.values()[sharedPrefs.getInt(PREF_ADVERTISEMENT_POWER_LEVEL, DEFAULT_BLUETOOTH_POWER_LEVEL)];
 	}
 
 	public void clearPreferences() {

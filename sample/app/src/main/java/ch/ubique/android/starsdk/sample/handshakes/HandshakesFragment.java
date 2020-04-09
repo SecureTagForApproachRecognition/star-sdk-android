@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import ch.ubique.android.starsdk.AppConfigManager;
 import ch.ubique.android.starsdk.TracingService;
 import ch.ubique.android.starsdk.database.Database;
 import ch.ubique.android.starsdk.database.models.HandShake;
@@ -105,6 +106,7 @@ public class HandshakesFragment extends Fragment {
 			groupedHandshakes.get(identifier).add(handshake);
 		}
 
+		long scanInterval = AppConfigManager.getInstance(getContext()).getScanInterval();
 		List<HandshakeInterval> result = new ArrayList<>();
 		for (Map.Entry<String, List<HandShake>> entry : groupedHandshakes.entrySet()) {
 			Collections.sort(entry.getValue(), (h1, h2) -> Long.compare(h1.getTimestamp(), h2.getTimestamp()));
@@ -112,14 +114,14 @@ public class HandshakesFragment extends Fragment {
 			int end = 1;
 			while (end < entry.getValue().size()) {
 				if (entry.getValue().get(end).getTimestamp() - entry.getValue().get(end - 1).getTimestamp() >
-						MAX_NUMBER_OF_MISSING_HANDSHAKES * TracingService.SCAN_INTERVAL) {
+						MAX_NUMBER_OF_MISSING_HANDSHAKES * scanInterval) {
 					HandshakeInterval interval = new HandshakeInterval();
 					interval.identifier = entry.getKey();
 					interval.starttime = entry.getValue().get(start).getTimestamp();
 					interval.endtime = entry.getValue().get(end - 1).getTimestamp();
 					interval.count = end - start;
 					interval.expectedCount =
-							1 + (int) Math.ceil((interval.endtime - interval.starttime) * 1.0 / TracingService.SCAN_INTERVAL);
+							1 + (int) Math.ceil((interval.endtime - interval.starttime) * 1.0 / scanInterval);
 					result.add(interval);
 					start = end;
 				}
@@ -132,7 +134,7 @@ public class HandshakesFragment extends Fragment {
 			interval.endtime = entry.getValue().get(end - 1).getTimestamp();
 			interval.count = end - start;
 			interval.expectedCount =
-					1 + (int) Math.ceil((interval.endtime - interval.starttime) * 1.0 / TracingService.SCAN_INTERVAL);
+					1 + (int) Math.ceil((interval.endtime - interval.starttime) * 1.0 / scanInterval);
 			result.add(interval);
 		}
 
