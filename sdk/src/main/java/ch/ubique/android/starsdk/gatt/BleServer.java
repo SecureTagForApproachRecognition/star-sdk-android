@@ -153,7 +153,7 @@ public class BleServer {
 
 		AdvertiseSettings.Builder settingBuilder = new AdvertiseSettings.Builder();
 		settingBuilder.setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER);
-		settingBuilder.setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_LOW);
+		settingBuilder.setTxPowerLevel(AppConfigManager.getInstance(context).getBluetoothPowerLevel().getValue());
 		settingBuilder.setConnectable(true);
 
 		mLeAdvertiser.startAdvertising(settingBuilder.build(), advBuilder.build(), advertiseCallback);

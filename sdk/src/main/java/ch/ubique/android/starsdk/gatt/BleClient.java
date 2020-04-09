@@ -35,11 +35,16 @@ public class BleClient {
 	private BluetoothLeScanner bleScanner;
 	private ScanCallback bleScanCallback;
 	private GattConnectionThread gattConnectionThread;
+	private long minTimeToReconnectToSameDevice = 5 * 60 * 1000;
 
 	public BleClient(Context context) {
 		this.context = context;
 		gattConnectionThread = new GattConnectionThread();
 		gattConnectionThread.start();
+	}
+
+	public void setMinTimeToReconnectToSameDevice(long minTimeToReconnectToSameDevice) {
+		this.minTimeToReconnectToSameDevice = minTimeToReconnectToSameDevice;
 	}
 
 	public void start() {
@@ -91,7 +96,6 @@ public class BleClient {
 		Logger.i(TAG, "bleScanner started");
 	}
 
-	public static final long MINIMUM_TIME_TO_RECONNECT_TO_SAME_DEVICE = TracingService.SCAN_INTERVAL;
 	public static final Map<String, Long> deviceLastConnected = new HashMap<>();
 
 	public void onDeviceFound(ScanResult scanResult) {
@@ -101,7 +105,7 @@ public class BleClient {
 
 			if (deviceLastConnected.get(bluetoothDevice.getAddress()) != null &&
 					deviceLastConnected.get(bluetoothDevice.getAddress()) > System.currentTimeMillis() -
-							MINIMUM_TIME_TO_RECONNECT_TO_SAME_DEVICE) {
+							minTimeToReconnectToSameDevice) {
 				Log.d(TAG, "skipped");
 				return;
 			}

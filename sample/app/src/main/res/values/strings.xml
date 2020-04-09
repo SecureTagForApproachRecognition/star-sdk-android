@@ -44,4 +44,8 @@
 	<string name="raw_handshakes">raw handshakes</string>
 	<string name="merged_handshakes">merged handshakes</string>
 	<string name="deanonymization_test_mode">Deanonymization Test Mode</string>
+	<string name="parameter_scan_interval_title">Scan interval</string>
+	<string name="parameter_scan_duration_title">Scan duration</string>
+	<string name="parameter_info_unit_seconds">in seconds</string>
+	<string name="parameter_advertisement_power_level">Power level of advertising</string>
 </resources>
