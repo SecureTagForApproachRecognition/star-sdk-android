@@ -30,7 +30,7 @@ public class STARModule implements STARInterface {
 	private static String KEY_ALIAS;
 	private static final String KEY_ENTRY = "STAR_KEY";
 	private static final int interval = 60;
-	private static final int KEY_LENGTH = 26;
+	public static final int KEY_LENGTH = 26;
 	private static STARModule instance;
 	private KeyStore ks;
 	private SharedPreferences esp;
