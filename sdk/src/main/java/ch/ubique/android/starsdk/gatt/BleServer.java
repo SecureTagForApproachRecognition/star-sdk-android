@@ -5,7 +5,6 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk.gatt;
 
 import android.bluetooth.*;
@@ -20,6 +19,7 @@ import android.util.Log;
 
 import java.util.UUID;
 
+import ch.ubique.android.starsdk.AppConfigManager;
 import ch.ubique.android.starsdk.crypto.STARModule;
 
 public class BleServer {
@@ -112,6 +112,18 @@ public class BleServer {
 		};
 	}
 
+	private byte[] getAdvertiseData() {
+		byte[] advertiseData = STARModule.getInstance(context).newTOTP();
+		String calibrationTestDeviceName = AppConfigManager.getInstance(context).getCalibrationTestDeviceName();
+		if (calibrationTestDeviceName != null) {
+			byte[] nameBytes = calibrationTestDeviceName.getBytes();
+			for (int i = 0; i < AppConfigManager.CALIBRATION_TEST_DEVICE_NAME_LENGTH; i++) {
+				advertiseData[i] = nameBytes[i];
+			}
+		}
+		return advertiseData;
+	}
+
 	private void setupService() {
 		BluetoothGattService oldService = mGattServer.getService(SERVICE_UUID);
 		if (oldService != null) {
@@ -126,7 +138,7 @@ public class BleServer {
 
 		BluetoothGattService gattService = new BluetoothGattService(SERVICE_UUID, BluetoothGattService.SERVICE_TYPE_PRIMARY);
 
-		testCharacteristic.setValue(STARModule.getInstance(context).newTOTP());
+		testCharacteristic.setValue(getAdvertiseData());
 
 		gattService.addCharacteristic(testCharacteristic);
 		mGattServer.addService(gattService);

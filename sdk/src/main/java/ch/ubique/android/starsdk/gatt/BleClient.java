@@ -5,69 +5,39 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk.gatt;
 
-import android.bluetooth.*;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
-import android.os.Build;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.ParcelUuid;
-import android.util.Base64;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import ch.ubique.android.starsdk.BroadcastHelper;
-import ch.ubique.android.starsdk.util.LogHelper;
 import ch.ubique.android.starsdk.TracingService;
-import ch.ubique.android.starsdk.database.Database;
+import ch.ubique.android.starsdk.util.LogHelper;
 
 public class BleClient {
 
 	private final Context context;
-	HandlerThread gattConnectHandlerThread;
-	Handler gattConnectHandler;
 	private BluetoothLeScanner bleScanner;
 	private ScanCallback bleScanCallback;
-	private BluetoothGatt bluetoothGatt;
-	private LinkedBlockingQueue<BluetoothDevice> bluetoothDevicesToConnect = new LinkedBlockingQueue<>();
-
-	private Runnable closeGattAndConnectToNextDevice = new Runnable() {
-		@Override
-		public void run() {
-			gattConnectHandler.removeCallbacks(closeGattAndConnectToNextDevice);
-			if (bluetoothGatt != null) {
-				Log.d("BleClient", "closeGattAndConnectToNextDevice (disconnect() and then close())");
-				LogHelper.append("Calling disconnect() and close(): " + bluetoothGatt.getDevice().getAddress());
-				// Order matters! Call disconnect() before close() as the latter de-registers our client
-				// and essentially makes disconnect a NOP.
-				bluetoothGatt.disconnect();
-				bluetoothGatt.close();
-				bluetoothGatt = null;
-			}
-			LogHelper.append("Reset and wait for next BLE device");
-			connectGattForNextQueueElement();
-		}
-	};
+	private GattConnectionThread gattConnectionThread;
 
 	public BleClient(Context context) {
 		this.context = context;
-		gattConnectHandlerThread = new HandlerThread("GattConnectHandlerThread");
-		gattConnectHandlerThread.start();
-		gattConnectHandler = new Handler(gattConnectHandlerThread.getLooper());
-		gattConnectHandler.post(this::connectGattForNextQueueElement);
+		gattConnectionThread = new GattConnectionThread();
+		gattConnectionThread.start();
 	}
 
 	public void start() {
@@ -146,7 +116,7 @@ public class BleClient {
 
 			deviceLastConnected.put(bluetoothDevice.getAddress(), System.currentTimeMillis());
 
-			connectGatt(bluetoothDevice);
+			gattConnectionThread.addTask(new GattConnectionTask(context, bluetoothDevice, scanResult));
 		} catch (Throwable t) {
 			t.printStackTrace();
 			LogHelper.append(t);
@@ -155,100 +125,6 @@ public class BleClient {
 
 	private static double calculateDistance(int txPower, int rssi) {
 		return Math.pow(10, (txPower - rssi) / 20.0) / 1000.0;
-	}
-
-	public void connectGatt(BluetoothDevice bluetoothDevice) {
-		bluetoothDevicesToConnect.add(bluetoothDevice);
-	}
-
-	private void connectGattForNextQueueElement() {
-		BluetoothDevice bluetoothDevice = null;
-		try {
-			bluetoothDevice = bluetoothDevicesToConnect.take();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		if (bluetoothDevice == null) {
-			gattConnectHandler.post(this::connectGattForNextQueueElement);
-			return;
-		}
-		Log.d("BleClient", "connecting GATT...");
-		LogHelper.append("Trying to connect to: " + bluetoothDevice.getAddress());
-
-		final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
-			@Override
-			public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-				super.onConnectionStateChange(gatt, status, newState);
-				if (newState == BluetoothProfile.STATE_CONNECTING) {
-					Log.d("BluetoothGattCallback", "connecting... " + status);
-				} else if (newState == BluetoothProfile.STATE_CONNECTED) {
-					Log.d("BluetoothGattCallback", "connected " + status);
-					Log.d("BluetoothGattCallback", "requesting mtu...");
-					LogHelper.append("Gatt Connection established");
-					gatt.requestMtu(512);
-				} else if (newState == BluetoothProfile.STATE_DISCONNECTED || newState == BluetoothProfile.STATE_DISCONNECTING) {
-					Log.d("BluetoothGattCallback", "disconnected " + status);
-					LogHelper.append("Gatt Connection disconnected " + status);
-					closeGattAndConnectToNextDevice.run();
-				}
-			}
-
-			@Override
-			public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
-				Log.d("BluetoothGattCallback", "discovering services...");
-				gatt.discoverServices();
-			}
-
-			@Override
-			public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-				BluetoothGattService service = gatt.getService(BleServer.SERVICE_UUID);
-
-				if (service == null) {
-					Log.e("BluetoothGattCallback", "No GATT service for " + BleServer.SERVICE_UUID + " found, status="+status);
-					LogHelper.append("Could not find our GATT service");
-					closeGattAndConnectToNextDevice.run();
-					return;
-				}
-
-				Log.d("BluetoothGattCallback", "Service " + service.getUuid() + " found");
-
-				BluetoothGattCharacteristic characteristic = service.getCharacteristic(BleServer.TOTP_CHARACTERISTIC_UUID);
-
-				boolean initiatedRead = gatt.readCharacteristic(characteristic);
-				if (!initiatedRead) {
-					Log.e("BluetoothGattCallback", "Failed to initiate characteristic read");
-					LogHelper.append("Failed to read");
-				} else {
-					LogHelper.append("Read initiated");
-				}
-			}
-
-			@Override
-			public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-				Log.d("onCharacteristicRead", "[status:" + status + "] " + characteristic.getUuid() + ": " +
-						Arrays.toString(characteristic.getValue()));
-
-				if (characteristic.getUuid().equals(BleServer.TOTP_CHARACTERISTIC_UUID)) {
-					if (status == BluetoothGatt.GATT_SUCCESS) {
-						publishMessage(characteristic.getValue(), gatt.getDevice().getAddress());
-					} else {
-						Log.e("BluetoothGattCallback", "Failed to read characteristic. Status: "+status);
-
-						// TODO error
-					}
-				}
-				closeGattAndConnectToNextDevice.run();
-				LogHelper.append("Closed Gatt Connection");
-			}
-		};
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			bluetoothGatt = bluetoothDevice.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
-		} else {
-			bluetoothGatt = bluetoothDevice.connectGatt(context, false, gattCallback);
-		}
-
-		gattConnectHandler.postDelayed(closeGattAndConnectToNextDevice, 10 * 1000L);
 	}
 
 	public synchronized void stopScan() {
@@ -263,23 +139,8 @@ public class BleClient {
 	}
 
 	public synchronized void stop() {
-		gattConnectHandlerThread.quit();
+		gattConnectionThread.terminate();
 		stopScan();
-		if (bluetoothGatt != null) {
-			bluetoothGatt.close();
-			bluetoothGatt = null;
-		}
-	}
-
-	public void publishMessage(byte[] starValue, String sender) {
-		try {
-			String base64String = new String(Base64.encode(starValue, Base64.NO_WRAP));
-			Log.e("received", base64String);
-			new Database(context).addHandshake(context, starValue, System.currentTimeMillis());
-			LogHelper.append(base64String);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 }

@@ -1,13 +1,12 @@
 package ch.ubique.android.starsdk.sample;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.ViewCompat;
 import android.os.Bundle;
-import android.widget.LinearLayout;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import ch.ubique.android.starsdk.sample.controls.ControlsFragment;
+import ch.ubique.android.starsdk.sample.handshakes.HandshakesFragment;
 import ch.ubique.android.starsdk.sample.logs.LogsFragment;
 import ch.ubique.android.starsdk.sample.parameters.ParametersFragment;
 
@@ -41,6 +40,11 @@ public class MainActivity extends AppCompatActivity {
 				case R.id.action_parameters:
 					getSupportFragmentManager().beginTransaction()
 							.replace(R.id.main_fragment_container, ParametersFragment.newInstance())
+							.commit();
+					break;
+				case R.id.action_handshakes:
+					getSupportFragmentManager().beginTransaction()
+							.replace(R.id.main_fragment_container, HandshakesFragment.newInstance())
 							.commit();
 					break;
 				case R.id.action_logs:

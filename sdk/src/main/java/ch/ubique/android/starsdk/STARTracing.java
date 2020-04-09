@@ -5,7 +5,6 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk;
 
 import android.bluetooth.BluetoothAdapter;
@@ -147,6 +146,21 @@ public class STARTracing {
 	public static boolean isDevModeEnabled(Context context) {
 		checkInit();
 		return AppConfigManager.getInstance(context).isDevModeEnabled();
+	}
+
+	public static void setCalibrationTestDeviceName(Context context, String name) {
+		checkInit();
+		AppConfigManager.getInstance(context).setCalibrationTestDeviceName(name);
+	}
+
+	public static String getCalibrationTestDeviceName(Context context) {
+		checkInit();
+		return AppConfigManager.getInstance(context).getCalibrationTestDeviceName();
+	}
+
+	public static void disableCalibrationTestDeviceName(Context context) {
+		checkInit();
+		AppConfigManager.getInstance(context).setCalibrationTestDeviceName(null);
 	}
 
 	public static void clearData(Context context, Runnable onDeleteListener) {

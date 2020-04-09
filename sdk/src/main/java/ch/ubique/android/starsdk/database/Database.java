@@ -5,7 +5,6 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk.database;
 
 import android.content.ContentValues;
@@ -30,10 +29,6 @@ public class Database {
 	public Database(@NonNull Context context) {
 		databaseOpenHelper = DatabaseOpenHelper.getInstance(context);
 		databaseThread = DatabaseThread.getInstance(context);
-	}
-
-	private String[] asArray(String... columns) {
-		return columns;
 	}
 
 	public void addKnownCase(Context context, @NonNull byte[] key, @NonNull String day) {
@@ -86,11 +81,14 @@ public class Database {
 		});
 	}
 
-	public void addHandshake(Context context, byte[] star, long timestamp) {
+	public void addHandshake(Context context, byte[] star, String macAddress, int txPowerLevel, int rssi, long timestamp) {
 		SQLiteDatabase db = databaseOpenHelper.getWritableDatabase();
 		ContentValues values = new ContentValues();
 		values.put(HandShakes.STAR, star);
 		values.put(HandShakes.TIMESTAMP, timestamp);
+		values.put(HandShakes.MAC_ADDRESS, macAddress);
+		values.put(HandShakes.TX_POWER_LEVEL, txPowerLevel);
+		values.put(HandShakes.RSSI, rssi);
 		STARModule starModule = STARModule.getInstance(context);
 		getKnownCases(response -> {
 			databaseThread.post(() -> {
@@ -115,8 +113,11 @@ public class Database {
 				int id = cursor.getInt(cursor.getColumnIndexOrThrow(HandShakes.ID));
 				long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(HandShakes.TIMESTAMP));
 				byte[] star = cursor.getBlob(cursor.getColumnIndexOrThrow(HandShakes.STAR));
+				String macAddress = cursor.getString(cursor.getColumnIndexOrThrow(HandShakes.MAC_ADDRESS));
+				int txPowerLevel = cursor.getInt(cursor.getColumnIndexOrThrow(HandShakes.TX_POWER_LEVEL));
+				int rssi = cursor.getInt(cursor.getColumnIndexOrThrow(HandShakes.RSSI));
 				int associatedKnownCase = cursor.getInt(cursor.getColumnIndexOrThrow(HandShakes.ASSOCIATED_KNOWN_CASE));
-				HandShake handShake = new HandShake(id, timestamp, star, associatedKnownCase);
+				HandShake handShake = new HandShake(id, timestamp, star, macAddress, txPowerLevel, rssi, associatedKnownCase);
 				handShakes.add(handShake);
 			}
 		}

@@ -5,7 +5,6 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk;
 
 import android.content.Context;
@@ -32,6 +31,7 @@ public class AppConfigManager {
 		return instance;
 	}
 
+	public static final int CALIBRATION_TEST_DEVICE_NAME_LENGTH = 4;
 
 	private static final String PREF_NAME = "appConfigPreferences";
 	private static final String PREF_APPLICATION_LIST = "applicationList";
@@ -39,6 +39,7 @@ public class AppConfigManager {
 	private static final String PREF_RECEIVING_ENABLED = "receivingEnabled";
 	private static final String PREF_LAST_SYNC_DATE = "lastSyncDate";
 	private static final String PREF_AM_I_EXPOSED = "amIExposed";
+	private static final String PREF_CALIBRATION_TEST_DEVICE_NAME = "calibrationTestDeviceName";
 
 	private String appId;
 	private boolean isDev;
@@ -130,6 +131,19 @@ public class AppConfigManager {
 
 	public boolean isDevModeEnabled() {
 		return isDev;
+	}
+
+	public void setCalibrationTestDeviceName(String name) {
+		if (name != null && name.length() != CALIBRATION_TEST_DEVICE_NAME_LENGTH) {
+			throw new IllegalArgumentException(
+					"CalibrationTestDevice Name must have length " + CALIBRATION_TEST_DEVICE_NAME_LENGTH + ", provided string '" +
+							name + "' with length " + name.length());
+		}
+		sharedPrefs.edit().putString(PREF_CALIBRATION_TEST_DEVICE_NAME, name).commit();
+	}
+
+	public String getCalibrationTestDeviceName() {
+		return sharedPrefs.getString(PREF_CALIBRATION_TEST_DEVICE_NAME, null);
 	}
 
 	public void clearPreferences() {
