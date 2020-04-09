@@ -14,10 +14,14 @@
 	<string name="button_sync">force sync</string>
 	<string name="button_tracking_start">start tracking</string>
 	<string name="button_tracking_stop">stop tracking</string>
+	<string name="button_advertising_start">start advertising</string>
+	<string name="button_receiving_start">start receiving</string>
 	<string name="button_report_exposed">report exposed</string>
 	<string name="button_report_healed">report healed</string>
 	<string name="status_tracking_active">TRACKING</string>
 	<string name="status_tracking_inactive">STOPPED</string>
+	<string name="status_advertising">advertising: %1$b</string>
+	<string name="status_receiving">receiving: %1$b</string>
 	<string name="status_last_synced">last synced: %1$s</string>
 	<string name="status_number_handshakes">handshakes: %1$d</string>
 	<string name="status_been_exposed">has been exposed: %1$b</string>

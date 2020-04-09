@@ -35,7 +35,8 @@ public class AppConfigManager {
 
 	private static final String PREF_NAME = "appConfigPreferences";
 	private static final String PREF_APPLICATION_LIST = "applicationList";
-	private static final String PREF_TRACING_ENABLED = "tracingEnabled";
+	private static final String PREF_ADVERTISING_ENABLED = "advertisingEnabled";
+	private static final String PREF_RECEIVING_ENABLED = "receivingEnabled";
 	private static final String PREF_LAST_SYNC_DATE = "lastSyncDate";
 	private static final String PREF_AM_I_EXPOSED = "amIExposed";
 
@@ -85,12 +86,20 @@ public class AppConfigManager {
 		throw new IllegalStateException("The provided appId is not found by the discovery service!");
 	}
 
-	public void setTracingEnabled(boolean enabled) {
-		sharedPrefs.edit().putBoolean(PREF_TRACING_ENABLED, enabled).commit();
+	public void setAdvertisingEnabled(boolean enabled) {
+		sharedPrefs.edit().putBoolean(PREF_ADVERTISING_ENABLED, enabled).commit();
 	}
 
-	public boolean isTracingEnabled() {
-		return sharedPrefs.getBoolean(PREF_TRACING_ENABLED, false);
+	public boolean isAdvertisingEnabled() {
+		return sharedPrefs.getBoolean(PREF_ADVERTISING_ENABLED, false);
+	}
+
+	public void setReceivingEnabled(boolean enabled) {
+		sharedPrefs.edit().putBoolean(PREF_RECEIVING_ENABLED, enabled).commit();
+	}
+
+	public boolean isReceivingEnabled() {
+		return sharedPrefs.getBoolean(PREF_RECEIVING_ENABLED, false);
 	}
 
 	public void setLastSyncDate(long lastSyncDate) {

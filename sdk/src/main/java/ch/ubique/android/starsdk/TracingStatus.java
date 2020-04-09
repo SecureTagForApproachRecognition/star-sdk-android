@@ -11,16 +11,18 @@ package ch.ubique.android.starsdk;
 public class TracingStatus {
 
 	private int number_of_handshakes;
-	private boolean tracking_active;
+	private boolean is_advertising;
+	private boolean is_receiving;
 	private boolean was_contact_exposed;
 	private long last_sync_date;
 	private boolean am_i_exposed;
 	private ErrorState error;
 
-	public TracingStatus(int number_of_handshakes, boolean tracking_active, boolean was_contact_exposed, long last_sync_date,
+	public TracingStatus(int number_of_handshakes, boolean is_advertising, boolean is_receiving, boolean was_contact_exposed, long last_sync_date,
 			boolean am_i_exposed, ErrorState error) {
 		this.number_of_handshakes = number_of_handshakes;
-		this.tracking_active = tracking_active;
+		this.is_advertising = is_advertising;
+		this.is_receiving = is_receiving;
 		this.was_contact_exposed = was_contact_exposed;
 		this.last_sync_date = last_sync_date;
 		this.am_i_exposed = am_i_exposed;
@@ -31,8 +33,12 @@ public class TracingStatus {
 		return number_of_handshakes;
 	}
 
-	public boolean isTracking_active() {
-		return tracking_active;
+	public boolean isAdvertising() {
+		return is_advertising;
+	}
+
+	public boolean isReceiving() {
+		return is_receiving;
 	}
 
 	public boolean isWas_contact_exposed() {

@@ -114,6 +114,18 @@ public class ControlsFragment extends Fragment {
 
 		Button refreshButton = view.findViewById(R.id.home_button_sync);
 		refreshButton.setOnClickListener(v -> resyncSdk());
+
+		Button buttonStartAdvertising = view.findViewById(R.id.home_button_start_advertising);
+		buttonStartAdvertising.setOnClickListener(v -> {
+			STARTracing.start(v.getContext(), true, false);
+			updateSdkStatus();
+		});
+
+		Button buttonStartReceiving = view.findViewById(R.id.home_button_start_receiving);
+		buttonStartReceiving.setOnClickListener(v -> {
+			STARTracing.start(v.getContext(), false, true);
+			updateSdkStatus();
+		});
 	}
 
 	@Override
@@ -171,18 +183,23 @@ public class ControlsFragment extends Fragment {
 		statusText.setText(formatStatusString(status));
 
 		Button buttonStartStopTracking = view.findViewById(R.id.home_button_start_stop_tracking);
-		boolean isTracking = status.isTracking_active();
-		buttonStartStopTracking.setSelected(isTracking);
-		buttonStartStopTracking.setText(getString(isTracking ? R.string.button_tracking_stop
-															 : R.string.button_tracking_start));
+		boolean isRunning = status.isAdvertising() || status.isReceiving();
+		buttonStartStopTracking.setSelected(isRunning);
+		buttonStartStopTracking.setText(getString(isRunning ? R.string.button_tracking_stop
+															: R.string.button_tracking_start));
 		buttonStartStopTracking.setOnClickListener(v -> {
-			if (isTracking) {
-				STARTracing.stop(context);
+			if (isRunning) {
+				STARTracing.stop(v.getContext());
 			} else {
-				STARTracing.start(context);
+				STARTracing.start(v.getContext());
 			}
 			updateSdkStatus();
 		});
+
+		Button buttonStartAdvertising = view.findViewById(R.id.home_button_start_advertising);
+		buttonStartAdvertising.setEnabled(!isRunning);
+		Button buttonStartReceiving = view.findViewById(R.id.home_button_start_receiving);
+		buttonStartReceiving.setEnabled(!isRunning);
 
 		Button buttonReportExposed = view.findViewById(R.id.home_button_report_exposed);
 		boolean isExposed = status.isAm_i_exposed();
@@ -196,9 +213,11 @@ public class ControlsFragment extends Fragment {
 
 	private SpannableString formatStatusString(TracingStatus status) {
 		SpannableStringBuilder builder = new SpannableStringBuilder();
-		builder.append(getString(status.isTracking_active() ? R.string.status_tracking_active : R.string.status_tracking_inactive))
-				.append("\n")
+		boolean isTracking = status.isAdvertising() || status.isReceiving();
+		builder.append(getString(isTracking ? R.string.status_tracking_active : R.string.status_tracking_inactive)).append("\n")
 				.setSpan(new StyleSpan(Typeface.BOLD), 0, builder.length() - 1, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+		builder.append(getString(R.string.status_advertising, status.isAdvertising())).append("\n")
+				.append(getString(R.string.status_receiving, status.isReceiving())).append("\n");
 
 		long lastSyncDateUTC = status.getLast_sync_date();
 		String lastSyncDateString =
