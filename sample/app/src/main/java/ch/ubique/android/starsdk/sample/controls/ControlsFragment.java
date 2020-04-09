@@ -11,9 +11,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
+import android.text.Editable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.util.Log;
@@ -21,6 +23,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -135,6 +139,49 @@ public class ControlsFragment extends Fragment {
 								new Handler(getContext().getMainLooper()).post(this::updateSdkStatus));
 					});
 		});
+
+		EditText deanonymizationDeviceId = view.findViewById(R.id.deanonymization_device_id);
+		Switch deanonymizationSwitch = view.findViewById(R.id.deanonymization_switch);
+		if (STARTracing.getCalibrationTestDeviceName(getContext()) != null) {
+			deanonymizationSwitch.setChecked(true);
+			deanonymizationDeviceId.setText(STARTracing.getCalibrationTestDeviceName(getContext()));
+		}
+		deanonymizationSwitch.setOnCheckedChangeListener((compoundButton, enabled) -> {
+			if (enabled) {
+				setDeviceId(deanonymizationDeviceId.getText().toString());
+			} else {
+				STARTracing.disableCalibrationTestDeviceName(getContext());
+			}
+		});
+		deanonymizationDeviceId.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable editable) {
+				if (deanonymizationSwitch.isChecked()) {
+					setDeviceId(editable.toString());
+				}
+			}
+		});
+	}
+
+	private void setDeviceId(String deviceId) {
+		if (deviceId.length() > 4) {
+			deviceId = deviceId.substring(0, 4);
+		} else {
+			while (deviceId.length() < 4) {
+				deviceId = deviceId + " ";
+			}
+		}
+		STARTracing.setCalibrationTestDeviceName(getContext(), deviceId);
 	}
 
 	@Override
