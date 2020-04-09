@@ -1,6 +1,7 @@
 package ch.ubique.android.starsdk.sample.controls;
 
 import android.Manifest;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -30,7 +31,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -48,6 +52,7 @@ public class ControlsFragment extends Fragment {
 	private static final String TAG = ControlsFragment.class.getCanonicalName();
 
 	private static final int REQUEST_CODE_PERMISSION_LOCATION = 1;
+	private static final int REQUEST_CODE_SAVE_DB = 2;
 
 	private static final DateFormat DATE_FORMAT_SYNC = SimpleDateFormat.getDateTimeInstance();
 
@@ -102,6 +107,20 @@ public class ControlsFragment extends Fragment {
 		getContext().unregisterReceiver(sdkReceiver);
 	}
 
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+		if (requestCode == REQUEST_CODE_SAVE_DB && resultCode == Activity.RESULT_OK && data != null) {
+			Uri uri = data.getData();
+			try {
+				OutputStream targetOut = getContext().getContentResolver().openOutputStream(uri);
+				STARTracing.exportDb(getContext(), targetOut, () ->
+						new Handler(getContext().getMainLooper()).post(() -> setExportDbLoadingViewVisible(false)));
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 	private void setupUi(View view) {
 		Button locationButton = view.findViewById(R.id.home_button_location);
 		locationButton.setOnClickListener(
@@ -138,6 +157,15 @@ public class ControlsFragment extends Fragment {
 						STARTracing.clearData(v.getContext(), () ->
 								new Handler(getContext().getMainLooper()).post(this::updateSdkStatus));
 					});
+		});
+
+		Button buttonSaveDb = view.findViewById(R.id.home_button_export_db);
+		buttonSaveDb.setOnClickListener(v -> {
+			Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+			intent.setType("application/sqlite");
+			intent.putExtra(Intent.EXTRA_TITLE, "starsdk_sample_db.sqlite");
+			startActivityForResult(intent, REQUEST_CODE_SAVE_DB);
+			setExportDbLoadingViewVisible(true);
 		});
 
 		EditText deanonymizationDeviceId = view.findViewById(R.id.deanonymization_device_id);
@@ -259,6 +287,8 @@ public class ControlsFragment extends Fragment {
 
 		Button buttonClearData = view.findViewById(R.id.home_button_clear_data);
 		buttonClearData.setEnabled(!isRunning);
+		Button buttonSaveDb = view.findViewById(R.id.home_button_export_db);
+		buttonSaveDb.setEnabled(!isRunning);
 
 		Button buttonReportExposed = view.findViewById(R.id.home_button_report_exposed);
 		boolean isExposed = status.isAm_i_exposed();
@@ -354,6 +384,14 @@ public class ControlsFragment extends Fragment {
 		if (view != null) {
 			view.findViewById(R.id.home_loading_view_exposed).setVisibility(visible ? View.VISIBLE : View.GONE);
 			view.findViewById(R.id.home_button_report_exposed).setVisibility(visible ? View.INVISIBLE : View.VISIBLE);
+		}
+	}
+
+	private void setExportDbLoadingViewVisible(boolean visible) {
+		View view = getView();
+		if (view != null) {
+			view.findViewById(R.id.home_loading_view_export_db).setVisibility(visible ? View.VISIBLE : View.GONE);
+			view.findViewById(R.id.home_button_export_db).setVisibility(visible ? View.INVISIBLE : View.VISIBLE);
 		}
 	}
 

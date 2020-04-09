@@ -11,8 +11,12 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import androidx.annotation.NonNull;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -148,6 +152,17 @@ public class Database {
 	public void recreateTables(ResultListener<Void> listener) {
 		databaseThread.post(() -> {
 			databaseOpenHelper.recreateTables(databaseOpenHelper.getWritableDatabase());
+			listener.onResult(null);
+		});
+	}
+
+	public void exportTo(Context context, OutputStream targetOut, ResultListener<Void> listener) {
+		databaseThread.post(() -> {
+			try {
+				databaseOpenHelper.exportDatabaseTo(context, targetOut);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			listener.onResult(null);
 		});
 	}
