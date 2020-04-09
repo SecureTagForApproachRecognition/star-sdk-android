@@ -5,7 +5,6 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk;
 
 import android.app.*;
@@ -140,7 +139,16 @@ public class TracingService extends Service {
 			Logger.e(TAG, t);
 		}
 
-		handler.postDelayed(() -> {scheduleNextRun(this, scanInterval);}, scanDuration);
+		handler.postDelayed(() -> {
+			stopScanning();
+			scheduleNextRun(this, scanInterval);
+		}, scanDuration);
+	}
+
+	private void stopScanning() {
+		if (bleClient != null) {
+			bleClient.stopScan();
+		}
 	}
 
 	public static void scheduleNextRun(Context context, long scanInterval) {
