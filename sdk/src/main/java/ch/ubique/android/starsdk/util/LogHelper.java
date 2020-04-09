@@ -12,6 +12,7 @@ import android.content.Context;
 import java.io.*;
 import java.util.Date;
 
+@Deprecated
 public class LogHelper {
 
 	private static LogHelper instance = null;
@@ -22,6 +23,7 @@ public class LogHelper {
 		logFile.getParentFile().mkdirs();
 	}
 
+	@Deprecated
 	public static void init(Context context) {
 		if (instance == null) {
 			instance = new LogHelper(context);
@@ -37,10 +39,12 @@ public class LogHelper {
 		}
 	}
 
+	@Deprecated
 	public static synchronized void append(String text) {
 		instance.appendInternal(text);
 	}
 
+	@Deprecated
 	public static void append(Throwable t) {
 		String text = t.getMessage();
 		for (StackTraceElement stackTraceElement : t.getStackTrace()) {
@@ -49,6 +53,7 @@ public class LogHelper {
 		append(text);
 	}
 
+	@Deprecated
 	public static String getLog() {
 		return instance.getLogInternal();
 	}

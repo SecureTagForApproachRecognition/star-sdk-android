@@ -25,9 +25,11 @@ import java.util.Map;
 
 import ch.ubique.android.starsdk.BroadcastHelper;
 import ch.ubique.android.starsdk.TracingService;
-import ch.ubique.android.starsdk.util.LogHelper;
+import ch.ubique.android.starsdk.logger.Logger;
 
 public class BleClient {
+
+	private static final String TAG = "BleClient";
 
 	private final Context context;
 	private BluetoothLeScanner bleScanner;
@@ -74,7 +76,7 @@ public class BleClient {
 
 			@Override
 			public void onBatchScanResults(List<ScanResult> results) {
-				LogHelper.append("Batch size " + results.size());
+				Logger.d(TAG, "Batch size " + results.size());
 				for (ScanResult result : results) {
 					onScanResult(0, result);
 				}
@@ -86,7 +88,7 @@ public class BleClient {
 		};
 
 		bleScanner.startScan(scanFilters, scanSettings, bleScanCallback);
-		LogHelper.append("bleScanner started");
+		Logger.i(TAG, "bleScanner started");
 	}
 
 	public static final long MINIMUM_TIME_TO_RECONNECT_TO_SAME_DEVICE = TracingService.SCAN_INTERVAL;
@@ -95,23 +97,22 @@ public class BleClient {
 	public void onDeviceFound(ScanResult scanResult) {
 		try {
 			BluetoothDevice bluetoothDevice = scanResult.getDevice();
-			//LogHelper.append("scanned: " + bluetoothDevice.getAddress());
-			Log.d("BleClient", bluetoothDevice.getAddress() + "; " + scanResult.getScanRecord().getDeviceName());
+			Log.d(TAG, bluetoothDevice.getAddress() + "; " + scanResult.getScanRecord().getDeviceName());
 
 			if (deviceLastConnected.get(bluetoothDevice.getAddress()) != null &&
 					deviceLastConnected.get(bluetoothDevice.getAddress()) > System.currentTimeMillis() -
 							MINIMUM_TIME_TO_RECONNECT_TO_SAME_DEVICE) {
-				Log.d("BleClient", "skipped");
+				Log.d(TAG, "skipped");
 				return;
 			}
 
 			int power = scanResult.getScanRecord().getTxPowerLevel();
 			if (power == Integer.MIN_VALUE) {
-				LogHelper.append("No power levels found for (" + scanResult.getDevice().getName() + "), use default of 12dbm");
+				Logger.d(TAG, "No power levels found for (" + scanResult.getDevice().getName() + "), use default of 12dbm");
 				power = 12;
 			}
 			double distance = calculateDistance(power, scanResult.getRssi());
-			LogHelper.append("Distance to device (" + scanResult.getDevice().getAddress() + "): " + String.valueOf(distance) +
+			Logger.d(TAG, "Distance to device (" + scanResult.getDevice().getAddress() + "): " + String.valueOf(distance) +
 					"m");
 
 			deviceLastConnected.put(bluetoothDevice.getAddress(), System.currentTimeMillis());
@@ -119,7 +120,7 @@ public class BleClient {
 			gattConnectionThread.addTask(new GattConnectionTask(context, bluetoothDevice, scanResult));
 		} catch (Throwable t) {
 			t.printStackTrace();
-			LogHelper.append(t);
+			Logger.e(TAG, t);
 		}
 	}
 
@@ -132,8 +133,8 @@ public class BleClient {
 			final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 			bleScanner = bluetoothAdapter.getBluetoothLeScanner();
 		}
-		LogHelper.append("bleScanner stopped");
-		Log.d("BleClient", "stopping BLE scanner");
+		Logger.i(TAG, "bleScanner stopped");
+		Log.d(TAG, "stopping BLE scanner");
 		bleScanner.stopScan(bleScanCallback);
 		bleScanner = null;
 	}
