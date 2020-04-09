@@ -132,4 +132,8 @@ public class AppConfigManager {
 		return isDev;
 	}
 
+	public void clearPreferences() {
+		sharedPrefs.edit().clear().commit();
+	}
+
 }

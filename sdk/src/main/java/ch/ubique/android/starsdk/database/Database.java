@@ -144,4 +144,11 @@ public class Database {
 		return false;
 	}
 
+	public void recreateTables(ResultListener<Void> listener) {
+		databaseThread.post(() -> {
+			databaseOpenHelper.recreateTables(databaseOpenHelper.getWritableDatabase());
+			listener.onResult(null);
+		});
+	}
+
 }

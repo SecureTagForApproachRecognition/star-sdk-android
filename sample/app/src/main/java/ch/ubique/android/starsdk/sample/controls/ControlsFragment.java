@@ -126,6 +126,15 @@ public class ControlsFragment extends Fragment {
 			STARTracing.start(v.getContext(), false, true);
 			updateSdkStatus();
 		});
+
+		Button buttonClearData = view.findViewById(R.id.home_button_clear_data);
+		buttonClearData.setOnClickListener(v -> {
+			DialogUtil.showConfirmDialog(v.getContext(), R.string.dialog_clear_data_title,
+					(dialog, which) -> {
+						STARTracing.clearData(v.getContext(), () ->
+								new Handler(getContext().getMainLooper()).post(this::updateSdkStatus));
+					});
+		});
 	}
 
 	@Override
@@ -200,6 +209,9 @@ public class ControlsFragment extends Fragment {
 		buttonStartAdvertising.setEnabled(!isRunning);
 		Button buttonStartReceiving = view.findViewById(R.id.home_button_start_receiving);
 		buttonStartReceiving.setEnabled(!isRunning);
+
+		Button buttonClearData = view.findViewById(R.id.home_button_clear_data);
+		buttonClearData.setEnabled(!isRunning);
 
 		Button buttonReportExposed = view.findViewById(R.id.home_button_report_exposed);
 		boolean isExposed = status.isAm_i_exposed();
