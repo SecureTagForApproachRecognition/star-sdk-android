@@ -15,7 +15,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import ch.ubique.android.starsdk.AppConfigManager;
-import ch.ubique.android.starsdk.TracingService;
 import ch.ubique.android.starsdk.database.Database;
 import ch.ubique.android.starsdk.database.models.HandShake;
 import ch.ubique.android.starsdk.sample.R;
@@ -60,6 +59,7 @@ public class HandshakesFragment extends Fragment {
 			StringBuilder stringBuilder = new StringBuilder();
 			SimpleDateFormat sdf = new SimpleDateFormat("dd.MM HH:mm:ss");
 			if (raw) {
+				Collections.sort(response, (h1, h2) -> Long.compare(h2.getTimestamp(), h1.getTimestamp()));
 				for (HandShake handShake : response) {
 					stringBuilder.append(sdf.format(new Date(handShake.getTimestamp())));
 					stringBuilder.append(" ");
@@ -138,7 +138,7 @@ public class HandshakesFragment extends Fragment {
 			result.add(interval);
 		}
 
-		Collections.sort(result, (i1, i2) -> Integer.compare(i2.count, i1.count));
+		Collections.sort(result, (i1, i2) -> Long.compare(i2.endtime, i1.endtime));
 
 		return result;
 	}
