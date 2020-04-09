@@ -22,9 +22,11 @@ import androidx.core.app.NotificationCompat;
 
 import ch.ubique.android.starsdk.gatt.BleClient;
 import ch.ubique.android.starsdk.gatt.BleServer;
-import ch.ubique.android.starsdk.util.LogHelper;
+import ch.ubique.android.starsdk.logger.Logger;
 
 public class TracingService extends Service {
+
+	private static final String TAG = "TracingService";
 
 	public static final String ACTION_START = TracingService.class.getCanonicalName() + ".ACTION_START";
 	public static final String ACTION_STOP = TracingService.class.getCanonicalName() + ".ACTION_STOP";
@@ -63,10 +65,8 @@ public class TracingService extends Service {
 			wl.acquire();
 		}
 
-		LogHelper.init(this);
-		LogHelper.append("service started");
-
-		Log.d("TracingService", "onHandleIntent() with " + intent.getAction());
+		Logger.i(TAG, "service started");
+		Log.d(TAG, "onHandleIntent() with " + intent.getAction());
 
 		scanInterval = intent.getLongExtra(EXTRA_SCAN_INTERVAL, 5 * 60 * 1000);
 		scanDuration = intent.getLongExtra(EXTRA_SCAN_DURATION, 30 * 1000);
@@ -125,7 +125,7 @@ public class TracingService extends Service {
 	}
 
 	private void startTracing() {
-		Log.d("TracingService", "startTracing() ");
+		Log.d(TAG, "startTracing()");
 
 		try {
 			Notification notification = createForegroundNotification();
@@ -137,7 +137,7 @@ public class TracingService extends Service {
 			startServer();
 		} catch (Throwable t) {
 			t.printStackTrace();
-			LogHelper.append(t);
+			Logger.e(TAG, t);
 		}
 
 		handler.postDelayed(() -> {scheduleNextRun(this, scanInterval);}, scanDuration);
@@ -165,7 +165,7 @@ public class TracingService extends Service {
 		if (handler != null) {
 			handler.removeCallbacksAndMessages(null);
 		}
-		Log.d("TracingService", "onDestroy()");
+		Log.d(TAG, "onDestroy()");
 	}
 
 	@Nullable
@@ -173,7 +173,6 @@ public class TracingService extends Service {
 	public IBinder onBind(Intent intent) {
 		return null;
 	}
-
 
 	private void startServer() {
 		stopServer();
