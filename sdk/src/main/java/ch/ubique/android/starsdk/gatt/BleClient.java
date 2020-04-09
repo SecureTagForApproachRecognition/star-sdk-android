@@ -119,6 +119,12 @@ public class BleClient {
 			Logger.d(TAG, "Distance to device (" + scanResult.getDevice().getAddress() + "): " + String.valueOf(distance) +
 					"m");
 
+			byte[] payload = scanResult.getScanRecord().getManufacturerSpecificData(BleServer.MANUFACTURER_ID);
+			if (payload != null) { // if Android, optimize (meaning: send/read payload directly in the SCAN_RESP)
+				publishMessage(payload, bluetoothDevice.getAddress());
+				return;
+			}
+
 			deviceLastConnected.put(bluetoothDevice.getAddress(), System.currentTimeMillis());
 
 			gattConnectionThread.addTask(new GattConnectionTask(context, bluetoothDevice, scanResult));

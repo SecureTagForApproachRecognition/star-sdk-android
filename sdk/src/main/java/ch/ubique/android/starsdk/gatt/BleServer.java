@@ -25,6 +25,7 @@ import ch.ubique.android.starsdk.crypto.STARModule;
 public class BleServer {
 
 	public static final UUID SERVICE_UUID = UUID.fromString("8c8494e3-bab5-1848-40a0-1b06991c0000");
+	public static final int MANUFACTURER_ID = 0xabba;
 	public static final UUID TOTP_CHARACTERISTIC_UUID = UUID.fromString("8c8494e3-bab5-1848-40a0-1b06991c0001");
 
 	private final Context context;
@@ -151,12 +152,19 @@ public class BleServer {
 		advBuilder.addServiceUuid(new ParcelUuid(SERVICE_UUID));
 		advBuilder.setIncludeDeviceName(false);
 
+		AdvertiseData scanResponse = new AdvertiseData.Builder()
+				.setIncludeDeviceName(false).setIncludeTxPowerLevel(false)
+				// TODO make sure STARModule returns the same ephemeral ID within a specific epoch.
+				// TODO make sure advertisement is restarted when epoch changes
+				.addManufacturerData(MANUFACTURER_ID, STARModule.getInstance(context).newTOTP())
+				.build();
+
 		AdvertiseSettings.Builder settingBuilder = new AdvertiseSettings.Builder();
 		settingBuilder.setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER);
 		settingBuilder.setTxPowerLevel(AppConfigManager.getInstance(context).getBluetoothPowerLevel().getValue());
 		settingBuilder.setConnectable(true);
 
-		mLeAdvertiser.startAdvertising(settingBuilder.build(), advBuilder.build(), advertiseCallback);
+		mLeAdvertiser.startAdvertising(settingBuilder.build(), advBuilder.build(), scanResponse, advertiseCallback);
 	}
 
 	public void stopAdvertising() {
