@@ -268,6 +268,16 @@ public class ControlsFragment extends Fragment {
 						.showConfirmDialog(v.getContext(),
 								isExposed ? R.string.dialog_healed_title : R.string.dialog_expose_title,
 								(dialog, which) -> sendExposedUpdate(context, isExposed)));
+
+		EditText deanonymizationDeviceId = view.findViewById(R.id.deanonymization_device_id);
+		Switch deanonymizationSwitch = view.findViewById(R.id.deanonymization_switch);
+		if (STARTracing.getCalibrationTestDeviceName(getContext()) != null) {
+			deanonymizationSwitch.setChecked(true);
+			deanonymizationDeviceId.setText(STARTracing.getCalibrationTestDeviceName(getContext()));
+		} else {
+			deanonymizationSwitch.setChecked(false);
+			deanonymizationDeviceId.setText("0000");
+		}
 	}
 
 	private SpannableString formatStatusString(TracingStatus status) {

@@ -47,6 +47,10 @@ public class HandshakesFragment extends Fragment {
 		loadHandshakes(rawHandshakeSwitch.isChecked());
 
 		rawHandshakeSwitch.setOnCheckedChangeListener((compoundButton, raw) -> loadHandshakes(raw));
+
+		view.findViewById(R.id.refresh).setOnClickListener((v) -> {
+			loadHandshakes(rawHandshakeSwitch.isChecked());
+		});
 	}
 
 	private void loadHandshakes(boolean raw) {

@@ -7,7 +7,8 @@
 	<LinearLayout
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:layout_margin="20dp">
+		android:layout_margin="20dp"
+		android:gravity="center">
 
 		<TextView
 			android:layout_width="0dp"
@@ -21,7 +22,6 @@
 			android:id="@+id/raw_handshake_switch"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_gravity="center"
 			android:checked="true" />
 
 		<TextView
@@ -30,6 +30,12 @@
 			android:layout_weight="1"
 			android:padding="5dp"
 			android:text="@string/raw_handshakes" />
+
+		<ImageButton
+			android:id="@+id/refresh"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:src="@drawable/ic_refresh" />
 
 	</LinearLayout>
 
