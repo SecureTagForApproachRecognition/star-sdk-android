@@ -11,9 +11,12 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import androidx.core.content.ContextCompat;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import ch.ubique.android.starsdk.backend.CallbackListener;
 import ch.ubique.android.starsdk.backend.ResponseException;
@@ -174,6 +177,11 @@ public class STARTracing {
 		Logger.clear();
 		Database db = new Database(context);
 		db.recreateTables(response -> onDeleteListener.run());
+	}
+
+	public static void exportDb(Context context, OutputStream targetOut, Runnable onExportedListener) {
+		Database db = new Database(context);
+		db.exportTo(context, targetOut, response -> onExportedListener.run());
 	}
 
 }

@@ -5,13 +5,20 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.Uri;
 import androidx.annotation.NonNull;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
 
 class DatabaseOpenHelper extends SQLiteOpenHelper {
 
@@ -53,7 +60,19 @@ class DatabaseOpenHelper extends SQLiteOpenHelper {
 				KnownCases.create(),
 				HandShakes.create()
 		).run();
+	}
 
+
+	public void exportDatabaseTo(Context context, OutputStream targetOut) throws IOException {
+		File db = context.getDatabasePath(DATABASE_NAME);
+		FileInputStream fileInputStream = new FileInputStream(db);
+		byte[] buf = new byte[2048];
+		int len;
+		while ((len = fileInputStream.read(buf)) > 0) {
+			targetOut.write(buf, 0, len);
+		}
+		targetOut.close();
+		fileInputStream.close();
 	}
 
 }
