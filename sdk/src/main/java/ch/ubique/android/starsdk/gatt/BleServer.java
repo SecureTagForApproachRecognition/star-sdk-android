@@ -154,9 +154,7 @@ public class BleServer {
 
 		AdvertiseData scanResponse = new AdvertiseData.Builder()
 				.setIncludeDeviceName(false).setIncludeTxPowerLevel(false)
-				// TODO make sure STARModule returns the same ephemeral ID within a specific epoch.
-				// TODO make sure advertisement is restarted when epoch changes
-				.addManufacturerData(MANUFACTURER_ID, STARModule.getInstance(context).newTOTP())
+				.addManufacturerData(MANUFACTURER_ID, getAdvertiseData())
 				.build();
 
 		AdvertiseSettings.Builder settingBuilder = new AdvertiseSettings.Builder();
