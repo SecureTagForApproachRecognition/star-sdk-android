@@ -11,17 +11,16 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.Uri;
 import androidx.core.content.ContextCompat;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
 
 import ch.ubique.android.starsdk.backend.CallbackListener;
 import ch.ubique.android.starsdk.backend.ResponseException;
-import ch.ubique.android.starsdk.backend.models.Exposee;
+import ch.ubique.android.starsdk.backend.models.ExposeeAuthData;
+import ch.ubique.android.starsdk.backend.models.ExposeeRequest;
 import ch.ubique.android.starsdk.crypto.STARModule;
 import ch.ubique.android.starsdk.database.Database;
 import ch.ubique.android.starsdk.logger.Logger;
@@ -112,12 +111,26 @@ public class STARTracing {
 		);
 	}
 
-	public static void sendIWasExposed(Context context, Date date, Object customData, CallbackListener<Void> callback) {
+	public static void sendIWasExposed(Context context, Date date, ExposeeAuthData exposeeAuthData,
+			CallbackListener<Void> callback) {
 		checkInit();
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
-		appConfigManager.setAmIExposed(true);
 		appConfigManager.getBackendRepository(context)
-				.addExposee(new Exposee(STARModule.getInstance(context).getSecretKeyForBackend(date)), callback);
+				.addExposee(new ExposeeRequest(STARModule.getInstance(context).getSecretKeyForBackend(date),
+								date,
+								exposeeAuthData),
+						new CallbackListener<Void>() {
+							@Override
+							public void onSuccess(Void response) {
+								appConfigManager.setAmIExposed(true);
+								callback.onSuccess(response);
+							}
+
+							@Override
+							public void onError(Throwable throwable) {
+								callback.onError(throwable);
+							}
+						});
 	}
 
 	public static void stop(Context context) {
@@ -160,6 +173,8 @@ public class STARTracing {
 	public static void clearData(Context context, Runnable onDeleteListener) {
 		checkInit();
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
+		String appId = appConfigManager.getAppConfig().getAppId();
+		boolean devModeEnabled = appConfigManager.isDevModeEnabled();
 		if (appConfigManager.isAdvertisingEnabled() || appConfigManager.isReceivingEnabled()) {
 			throw new IllegalStateException("Tracking must be stopped for clearing the local data");
 		}
@@ -169,6 +184,8 @@ public class STARTracing {
 		Logger.clear();
 		Database db = new Database(context);
 		db.recreateTables(response -> onDeleteListener.run());
+
+		init(context, appId, devModeEnabled);
 	}
 
 	public static void exportDb(Context context, OutputStream targetOut, Runnable onExportedListener) {
