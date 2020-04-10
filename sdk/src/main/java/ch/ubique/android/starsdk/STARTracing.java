@@ -7,14 +7,18 @@
  */
 package ch.ubique.android.starsdk;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.os.PowerManager;
 import androidx.core.content.ContextCompat;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Date;
 
 import ch.ubique.android.starsdk.backend.CallbackListener;
@@ -86,20 +90,22 @@ public class STARTracing {
 		return appConfigManager.isAdvertisingEnabled() || appConfigManager.isReceivingEnabled();
 	}
 
-	public static void sync(Context context) throws IOException, ResponseException {
+	public static void sync(Context context) {
 		checkInit();
-		SyncWorker.doSync(context);
+		try {
+			SyncWorker.doSync(context);
+			AppConfigManager.getInstance(context).setLastSyncNetworkSuccess(true);
+		} catch (IOException | ResponseException e) {
+			e.printStackTrace();
+			AppConfigManager.getInstance(context).setLastSyncNetworkSuccess(false);
+		}
 	}
 
 	public static TracingStatus getStatus(Context context) {
 		checkInit();
 		Database database = new Database(context);
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
-		TracingStatus.ErrorState errorState = null;
-		final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-		if (!bluetoothAdapter.isEnabled()) {
-			errorState = TracingStatus.ErrorState.BLE_DISABLED;
-		}
+		ArrayList<TracingStatus.ErrorState> errorStates = checkTracingStatus(context);
 		return new TracingStatus(
 				database.getHandshakes().size(),
 				appConfigManager.isAdvertisingEnabled(),
@@ -107,8 +113,35 @@ public class STARTracing {
 				database.wasContactExposed(),
 				appConfigManager.getLastSyncDate(),
 				appConfigManager.getAmIExposed(),
-				errorState
+				errorStates
 		);
+	}
+
+	private static ArrayList<TracingStatus.ErrorState> checkTracingStatus(Context context) {
+		ArrayList<TracingStatus.ErrorState> errors = new ArrayList<>();
+
+		final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+		if (!bluetoothAdapter.isEnabled()) {
+			errors.add(TracingStatus.ErrorState.BLE_DISABLED);
+		}
+
+		PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+		boolean batteryOptimizationsDeactivated = powerManager.isIgnoringBatteryOptimizations(context.getPackageName());
+		if (!batteryOptimizationsDeactivated) {
+			errors.add(TracingStatus.ErrorState.BATTERY_OPTIMIZER_ENABLED);
+		}
+
+		boolean locationPermissionGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+				PackageManager.PERMISSION_GRANTED;
+		if (!locationPermissionGranted) {
+			errors.add(TracingStatus.ErrorState.MISSING_LOCATION_PERMISSION);
+		}
+
+		if (!AppConfigManager.getInstance(context).getLastSyncNetworkSuccess()) {
+			errors.add(TracingStatus.ErrorState.NETWORK_ERROR_WHILE_SYNCING);
+		}
+
+		return errors;
 	}
 
 	public static void sendIWasExposed(Context context, Date date, ExposeeAuthData exposeeAuthData,
