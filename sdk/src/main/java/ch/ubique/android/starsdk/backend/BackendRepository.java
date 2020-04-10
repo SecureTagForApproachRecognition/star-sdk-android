@@ -16,6 +16,7 @@ import java.io.IOException;
 
 import ch.ubique.android.starsdk.backend.models.Exposee;
 import ch.ubique.android.starsdk.backend.models.ExposedList;
+import ch.ubique.android.starsdk.backend.models.ExposeeRequest;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -72,9 +73,9 @@ public class BackendRepository implements Repository {
 		});
 	}
 
-	public void addExposee(@NonNull Exposee exposee, @NonNull CallbackListener<Void> callbackListener) {
+	public void addExposee(@NonNull ExposeeRequest exposeeRequest, @NonNull CallbackListener<Void> callbackListener) {
 
-		backendService.addExposee(exposee).enqueue(new Callback<Void>() {
+		backendService.addExposee(exposeeRequest).enqueue(new Callback<Void>() {
 
 			@Override
 			public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {

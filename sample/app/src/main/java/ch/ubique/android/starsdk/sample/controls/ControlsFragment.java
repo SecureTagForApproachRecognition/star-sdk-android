@@ -42,6 +42,7 @@ import ch.ubique.android.starsdk.STARTracing;
 import ch.ubique.android.starsdk.TracingStatus;
 import ch.ubique.android.starsdk.backend.CallbackListener;
 import ch.ubique.android.starsdk.backend.ResponseException;
+import ch.ubique.android.starsdk.backend.models.ExposeeAuthData;
 import ch.ubique.android.starsdk.sample.R;
 import ch.ubique.android.starsdk.sample.util.DialogUtil;
 import ch.ubique.android.starsdk.sample.util.RequirementsUtil;
@@ -54,6 +55,8 @@ public class ControlsFragment extends Fragment {
 	private static final int REQUEST_CODE_SAVE_DB = 2;
 
 	private static final DateFormat DATE_FORMAT_SYNC = SimpleDateFormat.getDateTimeInstance();
+
+	private static final String REGEX_VALIDITY_AUTH_CODE = "\\d+";
 
 	private BroadcastReceiver bluetoothReceiver = new BroadcastReceiver() {
 		@Override
@@ -290,13 +293,15 @@ public class ControlsFragment extends Fragment {
 		buttonSaveDb.setEnabled(!isRunning);
 
 		Button buttonReportExposed = view.findViewById(R.id.home_button_report_exposed);
-		buttonReportExposed.setEnabled(status.isAm_i_exposed());
+		buttonReportExposed.setEnabled(!status.isAm_i_exposed());
 		buttonReportExposed.setText(R.string.button_report_exposed);
 		buttonReportExposed.setOnClickListener(
 				v -> DialogUtil
-						.showConfirmDialog(v.getContext(),
-								R.string.dialog_expose_title,
-								(dialog, which) -> sendExposedUpdate(context)));
+						.showInputDialog(v.getContext(),
+								getString(R.string.dialog_exposed_title),
+								getString(R.string.dialog_exposed_input_message),
+								REGEX_VALIDITY_AUTH_CODE,
+								codeInputBase64 -> sendExposedUpdate(context, codeInputBase64)));
 
 		EditText deanonymizationDeviceId = view.findViewById(R.id.deanonymization_device_id);
 		Switch deanonymizationSwitch = view.findViewById(R.id.deanonymization_switch);
@@ -337,10 +342,10 @@ public class ControlsFragment extends Fragment {
 		return new SpannableString(builder);
 	}
 
-	private void sendExposedUpdate(Context context) {
+	private void sendExposedUpdate(Context context, String codeInputBase64) {
 		setExposeLoadingViewVisible(true);
 
-		STARTracing.sendIWasExposed(context, new Date(), null, new CallbackListener<Void>() {
+		STARTracing.sendIWasExposed(context, new Date(), new ExposeeAuthData(codeInputBase64), new CallbackListener<Void>() {
 			@Override
 			public void onSuccess(Void response) {
 				DialogUtil.showMessageDialog(context, getString(R.string.dialog_title_success),
