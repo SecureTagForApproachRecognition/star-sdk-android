@@ -23,6 +23,8 @@ import ch.ubique.android.starsdk.backend.models.Exposee;
 import ch.ubique.android.starsdk.database.Database;
 import ch.ubique.android.starsdk.util.DayDate;
 
+import static ch.ubique.android.starsdk.util.Base64Util.fromBase64;
+
 public class SyncWorker extends Worker {
 
 	private static final String TAG = "ch.ubique.android.starsdk.SyncWorker";
@@ -86,7 +88,7 @@ public class SyncWorker extends Worker {
 			for (Exposee exposee : exposedList.getExposed()) {
 				database.addKnownCase(
 						context,
-						Base64.decode(exposee.getKey(), Base64.NO_WRAP),
+						fromBase64(exposee.getKey()),
 						exposee.getOnset(),
 						dateToLoad
 				);

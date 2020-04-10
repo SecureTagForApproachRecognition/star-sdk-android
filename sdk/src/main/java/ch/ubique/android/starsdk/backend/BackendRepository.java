@@ -14,8 +14,8 @@ import androidx.annotation.Nullable;
 import java.io.IOException;
 
 import ch.ubique.android.starsdk.backend.models.ExposedList;
-import ch.ubique.android.starsdk.backend.models.ExposeeRequest;
 import ch.ubique.android.starsdk.backend.models.Exposee;
+import ch.ubique.android.starsdk.backend.models.ExposeeRequest;
 import ch.ubique.android.starsdk.util.DayDate;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -44,7 +44,7 @@ public class BackendRepository implements Repository {
 
 	@Nullable
 	public ExposedList getExposees(@NonNull DayDate dayDate) throws IOException, ResponseException {
-		String url = listBaseUrl + "v1/" + dayDate.formatAsString() + ".json";
+		String url = listBaseUrl + "v1/exposed/" + dayDate.formatAsString();
 		Response<ExposedList> response = backendService.getExposees(url).execute();
 		if (response.isSuccessful()) {
 			return response.body();

@@ -9,7 +9,6 @@ package ch.ubique.android.starsdk.crypto;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Base64;
 import android.util.Pair;
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKeys;
@@ -35,6 +34,8 @@ import com.google.gson.Gson;
 
 import ch.ubique.android.starsdk.database.models.Contact;
 import ch.ubique.android.starsdk.util.DayDate;
+
+import static ch.ubique.android.starsdk.util.Base64Util.toBase64;
 
 public class STARModule {
 
@@ -187,10 +188,14 @@ public class STARModule {
 	}
 
 	public String getSecretKeyForPublishing(DayDate date) {
-		for (Pair<DayDate, byte[]> daySKPair : getSKList()) {
+		SKList skList = getSKList();
+		for (Pair<DayDate, byte[]> daySKPair : skList) {
 			if (daySKPair.first.equals(date)) {
-				return new String(Base64.encode(daySKPair.second, Base64.NO_WRAP));
+				return toBase64(daySKPair.second);
 			}
+		}
+		if (date.isBefore(skList.get(skList.size() - 1).first)) {
+			return toBase64(skList.get(skList.size() - 1).second);
 		}
 		return null;
 	}

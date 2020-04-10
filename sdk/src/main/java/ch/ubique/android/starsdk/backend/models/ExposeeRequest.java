@@ -1,27 +1,16 @@
 package ch.ubique.android.starsdk.backend.models;
 
-import androidx.annotation.Nullable;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import ch.ubique.android.starsdk.util.DayDate;
 
 public class ExposeeRequest {
 
-	private static final SimpleDateFormat onsetDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
 	private String key;
-	private String onset;
+	private DayDate onset;
 	private ExposeeAuthData authData;
 
-	public ExposeeRequest(String key, String onset, ExposeeAuthData authData) {
+	public ExposeeRequest(String key, DayDate onset, ExposeeAuthData authData) {
 		this.key = key;
 		this.onset = onset;
-		this.authData = authData;
-	}
-
-	public ExposeeRequest(String key, Date onsetDate, ExposeeAuthData authData) {
-		this.key = key;
-		this.onset = onsetDateFormat.format(onsetDate);
 		this.authData = authData;
 	}
 
@@ -29,7 +18,7 @@ public class ExposeeRequest {
 		return key;
 	}
 
-	public String getOnset() {
+	public DayDate getOnset() {
 		return onset;
 	}
 

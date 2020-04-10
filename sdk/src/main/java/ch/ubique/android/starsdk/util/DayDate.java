@@ -3,13 +3,17 @@ package ch.ubique.android.starsdk.util;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Objects;
 import java.util.TimeZone;
 
+import com.google.gson.annotations.JsonAdapter;
+
+@JsonAdapter(DayDateJsonAdapter.class)
 public class DayDate {
 
-	private static SimpleDateFormat dayDateFormat = new SimpleDateFormat("YYYY-MM-dd");
+	private static SimpleDateFormat dayDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
 	static {
 		dayDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -33,7 +37,7 @@ public class DayDate {
 
 	public String formatAsString() {
 		synchronized (dayDateFormat) {
-			return dayDateFormat.format(timestampRepresentation);
+			return dayDateFormat.format(new Date(timestampRepresentation));
 		}
 	}
 

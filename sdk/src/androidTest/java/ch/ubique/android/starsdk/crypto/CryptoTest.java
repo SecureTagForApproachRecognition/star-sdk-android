@@ -7,8 +7,6 @@
  */
 package ch.ubique.android.starsdk.crypto;
 
-import android.util.Base64;
-import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -24,6 +22,7 @@ import org.junit.runner.RunWith;
 import ch.ubique.android.starsdk.database.models.Contact;
 import ch.ubique.android.starsdk.util.DayDate;
 
+import static ch.ubique.android.starsdk.util.Base64Util.fromBase64;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -62,11 +61,6 @@ public class CryptoTest {
 		byte[] newSecretKey = module.getCurrentSK(today);
 		byte[] mewCurrentEphId = module.getCurrentEphId();
 
-		Log.d("crypto", "key: " + new String(Base64.encode(newSecretKey, Base64.NO_WRAP)));
-		byte[] nextKey = module.getSKt1(newSecretKey);
-		byte[] nextEphId = module.createEphIds(nextKey).get(23);
-		Log.d("crypto", "ephid: " + new String(Base64.encode(nextEphId, Base64.NO_WRAP)));
-
 		assertFalse(Arrays.equals(oldSecretKey, newSecretKey));
 		assertFalse(Arrays.equals(oldCurrentEphId, mewCurrentEphId));
 	}
@@ -90,11 +84,11 @@ public class CryptoTest {
 		module.reset();
 		module.init();
 
-		byte[] ephId = Base64.decode(token, Base64.NO_WRAP);
+		byte[] ephId = fromBase64(token);
 		DayDate today = new DayDate();
 		List<Contact> contacts = new ArrayList<>();
 		contacts.add(new Contact(0, today, ephId, 0));
-		byte[] keyByte = Base64.decode(key, Base64.NO_WRAP);
+		byte[] keyByte = fromBase64(key);
 
 		HashSet<Contact> infectedContacts = new HashSet<>();
 		module.checkContacts(keyByte, today, today,
@@ -113,12 +107,12 @@ public class CryptoTest {
 		module.reset();
 		module.init();
 
-		byte[] ephId = Base64.decode(token, Base64.NO_WRAP);
+		byte[] ephId = fromBase64(token);
 		DayDate today = new DayDate();
 		DayDate yesterday = today.subtractDays(1);
 		List<Contact> contacts = new ArrayList<>();
 		contacts.add(new Contact(0, today, ephId, 0));
-		byte[] keyByte = Base64.decode(key, Base64.NO_WRAP);
+		byte[] keyByte = fromBase64(key);
 
 		HashSet<Contact> infectedContacts = new HashSet<>();
 		module.checkContacts(keyByte, yesterday, today,
