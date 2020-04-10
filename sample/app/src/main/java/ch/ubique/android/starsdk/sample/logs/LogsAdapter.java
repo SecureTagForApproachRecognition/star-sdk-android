@@ -9,20 +9,22 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import ch.ubique.android.starsdk.logger.LogEntry;
+import ch.ubique.android.starsdk.logger.LogLevel;
 import ch.ubique.android.starsdk.sample.R;
 
 class LogsAdapter extends RecyclerView.Adapter<LogsViewHolder> {
 
 	private final LayoutInflater inflater;
-	private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.ENGLISH);
+	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.ENGLISH);
 
 	private final List<LogEntry> logs = new ArrayList<>();
+	private List<LogEntry> filteredLogs = new ArrayList<>();
+
+	private LogLevel filterLogLevel = LogLevel.DEBUG;
+	private final Set<String> filterTags = new HashSet<>();
 
 	public LogsAdapter(Context context) {
 		inflater = LayoutInflater.from(context);
@@ -36,7 +38,7 @@ class LogsAdapter extends RecyclerView.Adapter<LogsViewHolder> {
 
 	@Override
 	public void onBindViewHolder(@NonNull LogsViewHolder holder, int position) {
-		LogEntry logEntry = logs.get(position);
+		LogEntry logEntry = filteredLogs.get(position);
 		holder.timeView.setText(dateFormat.format(new Date(logEntry.getTime())));
 		holder.levelView.setText(logEntry.getLevel().getKey());
 		holder.tagView.setText(logEntry.getTag());
@@ -59,7 +61,7 @@ class LogsAdapter extends RecyclerView.Adapter<LogsViewHolder> {
 
 	@Override
 	public int getItemCount() {
-		return logs.size();
+		return filteredLogs.size();
 	}
 
 	public long getLastLogTime() {
@@ -71,10 +73,44 @@ class LogsAdapter extends RecyclerView.Adapter<LogsViewHolder> {
 	}
 
 	public void appendLogs(List<LogEntry> logEntries) {
-		int startIndex = logs.size();
 		logs.addAll(logEntries);
-		notifyItemRangeInserted(startIndex, logEntries.size());
+
+		int startIndex = filteredLogs.size();
+		List<LogEntry> filteredLogsToAdd = getFilteredLogs(logEntries);
+		filteredLogs.addAll(filteredLogsToAdd);
+
+		notifyItemRangeInserted(startIndex, filteredLogsToAdd.size());
 	}
+
+	public void setFilterLogLevel(LogLevel logLevel) {
+		filterLogLevel = logLevel;
+		invalidateFilteredList();
+	}
+
+	public void setFilterTags(List<String> tags) {
+		filterTags.clear();
+		filterTags.addAll(tags);
+		filterTags.remove("");
+		invalidateFilteredList();
+	}
+
+	private void invalidateFilteredList() {
+		filteredLogs = getFilteredLogs(logs);
+		notifyDataSetChanged();
+	}
+
+	private List<LogEntry> getFilteredLogs(List<LogEntry> logs) {
+		List<LogEntry> filteredLogs = new ArrayList<>();
+		for (LogEntry log : logs) {
+			if (log.getLevel().getI() >= filterLogLevel.getI()) {
+				if (filterTags.isEmpty() || filterTags.contains(log.getTag())) {
+					filteredLogs.add(log);
+				}
+			}
+		}
+		return filteredLogs;
+	}
+
 }
 
 class LogsViewHolder extends RecyclerView.ViewHolder {

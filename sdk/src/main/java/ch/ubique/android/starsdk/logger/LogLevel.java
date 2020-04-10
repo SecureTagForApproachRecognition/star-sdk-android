@@ -2,16 +2,18 @@ package ch.ubique.android.starsdk.logger;
 
 public enum LogLevel {
 
-	DEBUG("d", 1),
-	INFO("i", 2),
-	ERROR("e", 3),
-	OFF("-", Integer.MAX_VALUE);
+	DEBUG("d", "debug", 1),
+	INFO("i", "info", 2),
+	ERROR("e", "error", 3),
+	OFF("-", "off", Integer.MAX_VALUE);
 
 	private final String key;
+	private final String value;
 	private final int i;
 
-	LogLevel(String key, int i) {
+	LogLevel(String key, String value, int i) {
 		this.key = key;
+		this.value = value;
 		this.i = i;
 	}
 
@@ -26,6 +28,10 @@ public enum LogLevel {
 
 	public String getKey() {
 		return key;
+	}
+
+	public String getValue() {
+		return value;
 	}
 
 	public int getI() {
