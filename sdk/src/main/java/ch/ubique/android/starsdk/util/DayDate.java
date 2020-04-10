@@ -82,7 +82,7 @@ public class DayDate {
 	public DayDate subtractDays(int days) {
 		Calendar cal = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
 		cal.setTimeInMillis(timestampRepresentation);
-		cal.add(Calendar.DATE, -14);
+		cal.add(Calendar.DATE, -days);
 		return new DayDate(cal.getTimeInMillis());
 	}
 

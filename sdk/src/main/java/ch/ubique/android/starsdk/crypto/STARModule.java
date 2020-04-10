@@ -93,7 +93,7 @@ public class STARModule {
 		esp.edit().putString(KEY_SK_LIST_JSON, new Gson().toJson(skList)).commit();
 	}
 
-	private byte[] getSKt1(byte[] SKt0) {
+	protected byte[] getSKt1(byte[] SKt0) {
 		try {
 			MessageDigest digest = MessageDigest.getInstance("SHA-256");
 			byte[] SKt1 = digest.digest(SKt0);
@@ -114,7 +114,7 @@ public class STARModule {
 		storeSKList(skList);
 	}
 
-	private byte[] getCurrentSK(DayDate day) {
+	protected byte[] getCurrentSK(DayDate day) {
 		SKList SKList = getSKList();
 		while (SKList.get(0).first.isBefore(day)) {
 			rotateSK();
@@ -124,7 +124,7 @@ public class STARModule {
 		return SKList.get(0).second;
 	}
 
-	private List<byte[]> createEphIds(byte[] SK) {
+	protected List<byte[]> createEphIds(byte[] SK) {
 		try {
 			Mac mac = Mac.getInstance("HmacSHA256");
 			mac.init(new SecretKeySpec(SK, "HmacSHA256"));
