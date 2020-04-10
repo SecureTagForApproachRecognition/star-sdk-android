@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -260,12 +261,8 @@ public class ControlsFragment extends Fragment {
 
 	private void resyncSdk() {
 		new Thread(() -> {
-			try {
 				STARTracing.sync(getContext());
 				new Handler(getContext().getMainLooper()).post(this::updateSdkStatus);
-			} catch (IOException | ResponseException e) {
-				Log.e(TAG, e.getMessage(), e);
-			}
 		}).start();
 	}
 
@@ -343,13 +340,15 @@ public class ControlsFragment extends Fragment {
 				.append(getString(R.string.status_been_exposed, status.isWas_contact_exposed())).append("\n")
 				.append(getString(R.string.status_number_handshakes, status.getNumber_of_handshakes()));
 
-		if (status.getError() != null) {
-			String errorString = status.getError().toString();
+		ArrayList<TracingStatus.ErrorState> errors = status.getErrors();
+		if (errors != null && errors.size() > 0) {
 			int start = builder.length();
-			builder.append("\n\n")
-					.append(errorString)
-					.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.red, null)),
-							start, builder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+			builder.append("\n");
+			for (TracingStatus.ErrorState error : errors) {
+				builder.append("\n").append(error.toString());
+			}
+			builder.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.red, null)),
+					start, builder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
 
 		return new SpannableString(builder);

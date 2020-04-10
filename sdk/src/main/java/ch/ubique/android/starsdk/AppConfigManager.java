@@ -42,6 +42,7 @@ public class AppConfigManager {
 	private static final String PREF_ADVERTISING_ENABLED = "advertisingEnabled";
 	private static final String PREF_RECEIVING_ENABLED = "receivingEnabled";
 	private static final String PREF_LAST_SYNC_DATE = "lastSyncDate";
+	private static final String PREF_LAST_SYNC_NET_SUCCESS = "lastSyncNetSuccess";
 	private static final String PREF_AM_I_EXPOSED = "amIExposed";
 	private static final String PREF_CALIBRATION_TEST_DEVICE_NAME = "calibrationTestDeviceName";
 	private static final String PREF_SCAN_INTERVAL = "scanInterval";
@@ -116,6 +117,14 @@ public class AppConfigManager {
 
 	public long getLastSyncDate() {
 		return sharedPrefs.getLong(PREF_LAST_SYNC_DATE, 0);
+	}
+
+	public void setLastSyncNetworkSuccess(boolean success) {
+		sharedPrefs.edit().putBoolean(PREF_LAST_SYNC_NET_SUCCESS, success).commit();
+	}
+
+	public boolean getLastSyncNetworkSuccess() {
+		return sharedPrefs.getBoolean(PREF_LAST_SYNC_NET_SUCCESS, true);
 	}
 
 	public boolean getAmIExposed() {

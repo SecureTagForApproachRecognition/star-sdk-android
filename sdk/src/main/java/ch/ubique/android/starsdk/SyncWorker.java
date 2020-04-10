@@ -5,7 +5,6 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk;
 
 import android.content.Context;
@@ -66,7 +65,9 @@ public class SyncWorker extends Worker {
 
 		try {
 			doSync(getApplicationContext());
+			AppConfigManager.getInstance(getApplicationContext()).setLastSyncNetworkSuccess(true);
 		} catch (IOException | ResponseException e) {
+			AppConfigManager.getInstance(getApplicationContext()).setLastSyncNetworkSuccess(false);
 			return Result.retry();
 		}
 
