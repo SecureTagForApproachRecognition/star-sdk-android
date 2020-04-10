@@ -10,6 +10,7 @@ package ch.ubique.android.starsdk.backend;
 
 import ch.ubique.android.starsdk.backend.models.Exposee;
 import ch.ubique.android.starsdk.backend.models.ExposedList;
+import ch.ubique.android.starsdk.backend.models.ExposeeRequest;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -22,7 +23,7 @@ interface BackendService {
 	Call<ExposedList> getExposees(@Url String url);
 
 	@POST("v1/exposed")
-	Call<Void> addExposee(@Body Exposee exposee);
+	Call<Void> addExposee(@Body ExposeeRequest exposeeRequest);
 
 	@POST("v1/removeexposed")
 	Call<Void> removeExposee(@Body Exposee exposee);

@@ -8,6 +8,8 @@
 
 package ch.ubique.android.starsdk;
 
+import java.util.ArrayList;
+
 public class TracingStatus {
 
 	private int number_of_handshakes;
@@ -16,17 +18,17 @@ public class TracingStatus {
 	private boolean was_contact_exposed;
 	private long last_sync_date;
 	private boolean am_i_exposed;
-	private ErrorState error;
+	private ArrayList<ErrorState> errors;
 
 	public TracingStatus(int number_of_handshakes, boolean is_advertising, boolean is_receiving, boolean was_contact_exposed, long last_sync_date,
-			boolean am_i_exposed, ErrorState error) {
+			boolean am_i_exposed, ArrayList<ErrorState> errors) {
 		this.number_of_handshakes = number_of_handshakes;
 		this.is_advertising = is_advertising;
 		this.is_receiving = is_receiving;
 		this.was_contact_exposed = was_contact_exposed;
 		this.last_sync_date = last_sync_date;
 		this.am_i_exposed = am_i_exposed;
-		this.error = error;
+		this.errors = errors;
 	}
 
 	public int getNumber_of_handshakes() {
@@ -53,12 +55,12 @@ public class TracingStatus {
 		return am_i_exposed;
 	}
 
-	public ErrorState getError() {
-		return error;
+	public ArrayList<ErrorState> getErrors() {
+		return errors;
 	}
 
 	public enum ErrorState {
-		NEETWORK_ERROR_WHILE_SYNCING,
+		NETWORK_ERROR_WHILE_SYNCING,
 		MISSING_LOCATION_PERMISSION,
 		BLE_DISABLED,
 		BATTERY_OPTIMIZER_ENABLED,

@@ -7,19 +7,24 @@
  */
 package ch.ubique.android.starsdk;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.os.PowerManager;
 import androidx.core.content.ContextCompat;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Date;
 
 import ch.ubique.android.starsdk.backend.CallbackListener;
 import ch.ubique.android.starsdk.backend.ResponseException;
-import ch.ubique.android.starsdk.backend.models.Exposee;
+import ch.ubique.android.starsdk.backend.models.ExposeeAuthData;
+import ch.ubique.android.starsdk.backend.models.ExposeeRequest;
 import ch.ubique.android.starsdk.crypto.STARModule;
 import ch.ubique.android.starsdk.database.Database;
 import ch.ubique.android.starsdk.logger.Logger;
@@ -86,20 +91,22 @@ public class STARTracing {
 		return appConfigManager.isAdvertisingEnabled() || appConfigManager.isReceivingEnabled();
 	}
 
-	public static void sync(Context context) throws IOException, ResponseException {
+	public static void sync(Context context) {
 		checkInit();
-		SyncWorker.doSync(context);
+		try {
+			SyncWorker.doSync(context);
+			AppConfigManager.getInstance(context).setLastSyncNetworkSuccess(true);
+		} catch (IOException | ResponseException e) {
+			e.printStackTrace();
+			AppConfigManager.getInstance(context).setLastSyncNetworkSuccess(false);
+		}
 	}
 
 	public static TracingStatus getStatus(Context context) {
 		checkInit();
 		Database database = new Database(context);
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
-		TracingStatus.ErrorState errorState = null;
-		final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-		if (!bluetoothAdapter.isEnabled()) {
-			errorState = TracingStatus.ErrorState.BLE_DISABLED;
-		}
+		ArrayList<TracingStatus.ErrorState> errorStates = checkTracingStatus(context);
 		return new TracingStatus(
 				database.getHandshakes().size(),
 				appConfigManager.isAdvertisingEnabled(),
@@ -107,17 +114,57 @@ public class STARTracing {
 				database.wasContactExposed(),
 				appConfigManager.getLastSyncDate(),
 				appConfigManager.getAmIExposed(),
-				errorState
+				errorStates
 		);
 	}
 
-	public static void sendIWasExposed(Context context, Date onsetDate, Object customData, CallbackListener<Void> callback) {
+	private static ArrayList<TracingStatus.ErrorState> checkTracingStatus(Context context) {
+		ArrayList<TracingStatus.ErrorState> errors = new ArrayList<>();
+
+		final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+		if (!bluetoothAdapter.isEnabled()) {
+			errors.add(TracingStatus.ErrorState.BLE_DISABLED);
+		}
+
+		PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+		boolean batteryOptimizationsDeactivated = powerManager.isIgnoringBatteryOptimizations(context.getPackageName());
+		if (!batteryOptimizationsDeactivated) {
+			errors.add(TracingStatus.ErrorState.BATTERY_OPTIMIZER_ENABLED);
+		}
+
+		boolean locationPermissionGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+				PackageManager.PERMISSION_GRANTED;
+		if (!locationPermissionGranted) {
+			errors.add(TracingStatus.ErrorState.MISSING_LOCATION_PERMISSION);
+		}
+
+		if (!AppConfigManager.getInstance(context).getLastSyncNetworkSuccess()) {
+			errors.add(TracingStatus.ErrorState.NETWORK_ERROR_WHILE_SYNCING);
+		}
+
+		return errors;
+	}
+
+	public static void sendIWasExposed(Context context, Date date, ExposeeAuthData exposeeAuthData,
+			CallbackListener<Void> callback) {
 		checkInit();
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
-		appConfigManager.setAmIExposed(true);
-		DayDate onsetDayDate = new DayDate(onsetDate.getTime());
 		appConfigManager.getBackendRepository(context)
-				.addExposee(new Exposee(STARModule.getInstance(context).getSecretKeyForPublishing(onsetDayDate), onsetDayDate), callback);
+				.addExposee(new ExposeeRequest(STARModule.getInstance(context).getSecretKeyForBackend(date),
+								date,
+								exposeeAuthData),
+						new CallbackListener<Void>() {
+							@Override
+							public void onSuccess(Void response) {
+								appConfigManager.setAmIExposed(true);
+								callback.onSuccess(response);
+							}
+
+							@Override
+							public void onError(Throwable throwable) {
+								callback.onError(throwable);
+							}
+						});
 	}
 
 	public static void stop(Context context) {
@@ -160,6 +207,8 @@ public class STARTracing {
 	public static void clearData(Context context, Runnable onDeleteListener) {
 		checkInit();
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
+		String appId = appConfigManager.getAppConfig().getAppId();
+		boolean devModeEnabled = appConfigManager.isDevModeEnabled();
 		if (appConfigManager.isAdvertisingEnabled() || appConfigManager.isReceivingEnabled()) {
 			throw new IllegalStateException("Tracking must be stopped for clearing the local data");
 		}
@@ -169,6 +218,8 @@ public class STARTracing {
 		Logger.clear();
 		Database db = new Database(context);
 		db.recreateTables(response -> onDeleteListener.run());
+
+		init(context, appId, devModeEnabled);
 	}
 
 	public static void exportDb(Context context, OutputStream targetOut, Runnable onExportedListener) {
