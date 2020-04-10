@@ -29,6 +29,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 
 import java.io.FileNotFoundException;
@@ -36,6 +37,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 import ch.ubique.android.starsdk.STARTracing;
@@ -53,10 +55,12 @@ public class ControlsFragment extends Fragment {
 
 	private static final int REQUEST_CODE_PERMISSION_LOCATION = 1;
 	private static final int REQUEST_CODE_SAVE_DB = 2;
+	private static final int REQUEST_CODE_REPORT_EXPOSED = 3;
 
 	private static final DateFormat DATE_FORMAT_SYNC = SimpleDateFormat.getDateTimeInstance();
 
-	private static final String REGEX_VALIDITY_AUTH_CODE = "\\d+";
+	private static final String REGEX_VALIDITY_AUTH_CODE = "\\w+";
+	private static final int EXPOSED_MIN_DATE_DIFF = -21;
 
 	private BroadcastReceiver bluetoothReceiver = new BroadcastReceiver() {
 		@Override
@@ -119,6 +123,13 @@ public class ControlsFragment extends Fragment {
 						new Handler(getContext().getMainLooper()).post(() -> setExportDbLoadingViewVisible(false)));
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
+			}
+			return;
+		} else if (requestCode == REQUEST_CODE_REPORT_EXPOSED) {
+			if (resultCode == Activity.RESULT_OK) {
+				long onsetDate = data.getLongExtra(ExposedDialogFragment.RESULT_EXTRA_DATE_MILLIS, -1);
+				String authCodeBase64 = data.getStringExtra(ExposedDialogFragment.RESULT_EXTRA_AUTH_CODE_INPUT_BASE64);
+				sendExposedUpdate(getContext(), new Date(onsetDate), authCodeBase64);
 			}
 		}
 	}
@@ -296,12 +307,14 @@ public class ControlsFragment extends Fragment {
 		buttonReportExposed.setEnabled(!status.isAm_i_exposed());
 		buttonReportExposed.setText(R.string.button_report_exposed);
 		buttonReportExposed.setOnClickListener(
-				v -> DialogUtil
-						.showInputDialog(v.getContext(),
-								getString(R.string.dialog_exposed_title),
-								getString(R.string.dialog_exposed_input_message),
-								REGEX_VALIDITY_AUTH_CODE,
-								codeInputBase64 -> sendExposedUpdate(context, codeInputBase64)));
+				v -> {
+					Calendar minCal = Calendar.getInstance();
+					minCal.add(Calendar.DAY_OF_YEAR, EXPOSED_MIN_DATE_DIFF);
+					DialogFragment exposedDialog =
+							ExposedDialogFragment.newInstance(minCal.getTimeInMillis(), REGEX_VALIDITY_AUTH_CODE);
+					exposedDialog.setTargetFragment(this, REQUEST_CODE_REPORT_EXPOSED);
+					exposedDialog.show(getParentFragmentManager(), ExposedDialogFragment.class.getCanonicalName());
+				});
 
 		EditText deanonymizationDeviceId = view.findViewById(R.id.deanonymization_device_id);
 		Switch deanonymizationSwitch = view.findViewById(R.id.deanonymization_switch);
@@ -342,10 +355,10 @@ public class ControlsFragment extends Fragment {
 		return new SpannableString(builder);
 	}
 
-	private void sendExposedUpdate(Context context, String codeInputBase64) {
+	private void sendExposedUpdate(Context context, Date onsetDate, String codeInputBase64) {
 		setExposeLoadingViewVisible(true);
 
-		STARTracing.sendIWasExposed(context, new Date(), new ExposeeAuthData(codeInputBase64), new CallbackListener<Void>() {
+		STARTracing.sendIWasExposed(context, onsetDate, new ExposeeAuthData(codeInputBase64), new CallbackListener<Void>() {
 			@Override
 			public void onSuccess(Void response) {
 				DialogUtil.showMessageDialog(context, getString(R.string.dialog_title_success),

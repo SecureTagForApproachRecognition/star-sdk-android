@@ -35,8 +35,10 @@
 	<string name="dialog_title_success">Success</string>
 	<string name="dialog_title_error">Error</string>
 	<string name="dialog_exposed_title">Report exposed</string>
-	<string name="dialog_exposed_input_message">Please enter your code</string>
-	<string name="dialog_input_error">Invalid input! Please check again.</string>
+	<string name="dialog_exposed_input_message">Please select the determined infection date and enter your authentication code:</string>
+	<string name="dialog_exposed_code_hint">Authentication Code</string>
+	<string name="dialog_input_code_error">Invalid code! Please check again.</string>
+	<string name="dialog_input_date_error">Invalid date! Please check again.</string>
 	<string name="dialog_message_request_success">Request was sent successfully</string>
 	<string name="dialog_button_ok">OK</string>
 	<string name="tab_controls">controls</string>
