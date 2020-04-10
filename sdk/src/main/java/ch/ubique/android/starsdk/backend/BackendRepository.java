@@ -5,7 +5,6 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk.backend;
 
 import android.content.Context;
@@ -14,8 +13,9 @@ import androidx.annotation.Nullable;
 
 import java.io.IOException;
 
-import ch.ubique.android.starsdk.backend.models.Exposee;
 import ch.ubique.android.starsdk.backend.models.ExposedList;
+import ch.ubique.android.starsdk.backend.models.Exposee;
+import ch.ubique.android.starsdk.util.DayDate;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -42,10 +42,10 @@ public class BackendRepository implements Repository {
 	}
 
 	@Nullable
-	public ExposedList getExposees(@NonNull String dayDate) throws IOException, ResponseException {
-		String url = listBaseUrl + "v1/" + dayDate + ".json";
+	public ExposedList getExposees(@NonNull DayDate dayDate) throws IOException, ResponseException {
+		String url = listBaseUrl + "v1/" + dayDate.formatAsString() + ".json";
 		Response<ExposedList> response = backendService.getExposees(url).execute();
-		if(response.isSuccessful()){
+		if (response.isSuccessful()) {
 			return response.body();
 		}
 		throw new ResponseException(response.raw());
@@ -68,7 +68,6 @@ public class BackendRepository implements Repository {
 			public void onFailure(@NonNull Call<ExposedList> call, @NonNull Throwable throwable) {
 				callbackListener.onError(throwable);
 			}
-
 		});
 	}
 
@@ -89,7 +88,6 @@ public class BackendRepository implements Repository {
 			public void onFailure(@NonNull Call<Void> call, @NonNull Throwable throwable) {
 				callbackListener.onError(throwable);
 			}
-
 		});
 	}
 
@@ -110,9 +108,7 @@ public class BackendRepository implements Repository {
 			public void onFailure(@NonNull Call<Void> call, @NonNull Throwable throwable) {
 				callbackListener.onError(throwable);
 			}
-
 		});
 	}
-
 
 }

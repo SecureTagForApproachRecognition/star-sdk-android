@@ -20,10 +20,13 @@ import java.util.List;
 
 import ch.ubique.android.starsdk.BroadcastHelper;
 import ch.ubique.android.starsdk.crypto.STARModule;
-import ch.ubique.android.starsdk.database.models.HandShake;
-import ch.ubique.android.starsdk.database.models.KnownCase;
+import ch.ubique.android.starsdk.database.models.Contact;
+import ch.ubique.android.starsdk.database.models.Handshake;
+import ch.ubique.android.starsdk.util.DayDate;
 
 public class Database {
+
+	private static final boolean KEEP_HANDSHAKES_FOR_DEEBUG_PURPOSES = true;
 
 	private DatabaseOpenHelper databaseOpenHelper;
 	private DatabaseThread databaseThread;
@@ -33,116 +36,130 @@ public class Database {
 		databaseThread = DatabaseThread.getInstance(context);
 	}
 
-	public void addKnownCase(Context context, @NonNull byte[] key, @NonNull String day) {
+	public void addKnownCase(Context context, @NonNull byte[] key, @NonNull DayDate onsetDate, @NonNull DayDate bucketDate) {
 		SQLiteDatabase db = databaseOpenHelper.getWritableDatabase();
 		ContentValues values = new ContentValues();
 		values.put(KnownCases.KEY, key);
-		values.put(KnownCases.DAY, day);
+		values.put(KnownCases.ONSET, onsetDate.getStartOfDayTimestamp());
+		values.put(KnownCases.BUCKET_DAY, bucketDate.getStartOfDayTimestamp());
 		databaseThread.post(() -> {
 
+			//TODO check if already inserted
 			long idOfAddedCase = db.insert(KnownCases.TABLE_NAME, null, values);
-			ContentValues updateValues = new ContentValues();
-			updateValues.put(HandShakes.ASSOCIATED_KNOWN_CASE, idOfAddedCase);
 
 			STARModule starModule = STARModule.getInstance(context);
-			Cursor cursor = db
-					.query(HandShakes.TABLE_NAME, HandShakes.PROJECTION, HandShakes.ASSOCIATED_KNOWN_CASE + " IS NULL", null, null,
-							null, HandShakes.ID);
-			while (cursor.moveToNext()) {
-				byte[] star = cursor.getBlob(cursor.getColumnIndexOrThrow(HandShakes.STAR));
-				//TODO this check needs to take the day into account
-				if (starModule.isKeyMatchingEphId(key, star)) {
-					int id = cursor.getInt(cursor.getColumnIndexOrThrow(HandShakes.ID));
-					db.update(HandShakes.TABLE_NAME, updateValues, HandShakes.ID + "=" + id, null);
-					BroadcastHelper.sendUpdateBroadcast(context);
-				}
-			}
-		});
-	}
-
-	public void getKnownCases(@NonNull ResultListener<List<KnownCase>> resultListener) {
-		SQLiteDatabase db = databaseOpenHelper.getReadableDatabase();
-		databaseThread.post(new Runnable() {
-			List<KnownCase> knownCases = new ArrayList<>();
-
-			@Override
-			public void run() {
-				try (Cursor cursor = db
-						.query(KnownCases.TABLE_NAME, KnownCases.PROJECTION, null, null, null, null,
-								KnownCases.ID)) {
-					while (cursor.moveToNext()) {
-						int id = cursor.getInt(cursor.getColumnIndexOrThrow(KnownCases.ID));
-						byte[] key = cursor.getBlob(cursor.getColumnIndexOrThrow(KnownCases.KEY));
-						String day = cursor.getString(cursor.getColumnIndexOrThrow(KnownCases.DAY));
-						KnownCase knownCase = new KnownCase(id, day, key);
-						knownCases.add(knownCase);
-					}
-				}
-
-				databaseThread.onResult(() -> resultListener.onResult(knownCases));
-			}
+			starModule.checkContacts(key, onsetDate, bucketDate, (date) -> getContacts(date), (contact) -> {
+				ContentValues updateValues = new ContentValues();
+				updateValues.put(Contacts.ASSOCIATED_KNOWN_CASE, idOfAddedCase);
+				db.update(Contacts.TABLE_NAME, updateValues, Contacts.ID + "=" + contact.getId(), null);
+				BroadcastHelper.sendUpdateBroadcast(context);
+			});
 		});
 	}
 
 	public void addHandshake(Context context, byte[] star, String macAddress, int txPowerLevel, int rssi, long timestamp) {
 		SQLiteDatabase db = databaseOpenHelper.getWritableDatabase();
 		ContentValues values = new ContentValues();
-		values.put(HandShakes.STAR, star);
-		values.put(HandShakes.TIMESTAMP, timestamp);
-		values.put(HandShakes.MAC_ADDRESS, macAddress);
-		values.put(HandShakes.TX_POWER_LEVEL, txPowerLevel);
-		values.put(HandShakes.RSSI, rssi);
-		STARModule starModule = STARModule.getInstance(context);
-		getKnownCases(response -> {
-			databaseThread.post(() -> {
-				for (KnownCase knownCase : response) {
-					//TODO this check needs to take the day into account
-					if (starModule.isKeyMatchingEphId(knownCase.getKey(), star)) {
-						values.put(HandShakes.ASSOCIATED_KNOWN_CASE, knownCase.getId());
-						break;
-					}
-				}
-				db.insert(HandShakes.TABLE_NAME, null, values);
-				BroadcastHelper.sendUpdateBroadcast(context);
-			});
+		values.put(Handshakes.EPHID, star);
+		values.put(Handshakes.TIMESTAMP, timestamp);
+		values.put(Handshakes.MAC_ADDRESS, macAddress);
+		values.put(Handshakes.TX_POWER_LEVEL, txPowerLevel);
+		values.put(Handshakes.RSSI, rssi);
+		databaseThread.post(() -> {
+			db.insert(Handshakes.TABLE_NAME, null, values);
+			BroadcastHelper.sendUpdateBroadcast(context);
 		});
 	}
 
-	public List<HandShake> getHandshakes() {
+	public List<Handshake> getHandshakes() {
 		SQLiteDatabase db = databaseOpenHelper.getReadableDatabase();
-		List<HandShake> handShakes = new ArrayList<>();
+		List<Handshake> handshakes = new ArrayList<>();
 		try (Cursor cursor = db
-				.query(HandShakes.TABLE_NAME, HandShakes.PROJECTION, null, null, null, null, HandShakes.ID)) {
+				.query(Handshakes.TABLE_NAME, Handshakes.PROJECTION, null, null, null, null, Handshakes.ID)) {
 			while (cursor.moveToNext()) {
-				int id = cursor.getInt(cursor.getColumnIndexOrThrow(HandShakes.ID));
-				long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(HandShakes.TIMESTAMP));
-				byte[] star = cursor.getBlob(cursor.getColumnIndexOrThrow(HandShakes.STAR));
-				String macAddress = cursor.getString(cursor.getColumnIndexOrThrow(HandShakes.MAC_ADDRESS));
-				int txPowerLevel = cursor.getInt(cursor.getColumnIndexOrThrow(HandShakes.TX_POWER_LEVEL));
-				int rssi = cursor.getInt(cursor.getColumnIndexOrThrow(HandShakes.RSSI));
-				int associatedKnownCase = cursor.getInt(cursor.getColumnIndexOrThrow(HandShakes.ASSOCIATED_KNOWN_CASE));
-				HandShake handShake = new HandShake(id, timestamp, star, macAddress, txPowerLevel, rssi, associatedKnownCase);
-				handShakes.add(handShake);
+				int id = cursor.getInt(cursor.getColumnIndexOrThrow(Handshakes.ID));
+				long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(Handshakes.TIMESTAMP));
+				byte[] star = cursor.getBlob(cursor.getColumnIndexOrThrow(Handshakes.EPHID));
+				String macAddress = cursor.getString(cursor.getColumnIndexOrThrow(Handshakes.MAC_ADDRESS));
+				int txPowerLevel = cursor.getInt(cursor.getColumnIndexOrThrow(Handshakes.TX_POWER_LEVEL));
+				int rssi = cursor.getInt(cursor.getColumnIndexOrThrow(Handshakes.RSSI));
+				Handshake handShake = new Handshake(id, timestamp, star, macAddress, txPowerLevel, rssi);
+				handshakes.add(handShake);
 			}
 		}
-		return handShakes;
+		return handshakes;
 	}
 
-	public void getHandshakes(@NonNull ResultListener<List<HandShake>> resultListener) {
+	public void getHandshakes(@NonNull ResultListener<List<Handshake>> resultListener) {
 		databaseThread.post(new Runnable() {
-			List<HandShake> handShakes = new ArrayList<>();
+			List<Handshake> handshakes = new ArrayList<>();
 
 			@Override
 			public void run() {
-				handShakes = getHandshakes();
-				databaseThread.onResult(() -> resultListener.onResult(handShakes));
+				handshakes = getHandshakes();
+				databaseThread.onResult(() -> resultListener.onResult(handshakes));
 			}
 		});
 	}
 
+	public void generateContactsFromHandshakes() {
+		databaseThread.post(() -> {
+
+			List<Handshake> handshakes = getHandshakes();
+			//TODO add advanced logic to create contacts
+			for (Handshake handshake : handshakes) {
+				Contact contact = new Contact(-1, new DayDate(handshake.getTimestamp()), handshake.getEphId(), 0);
+				addContact(contact);
+			}
+
+			if (!KEEP_HANDSHAKES_FOR_DEEBUG_PURPOSES) {
+				DayDate lastDayToKeep = new DayDate().subtractDays(STARModule.NUMBER_OF_DAYS_TO_KEEP_DATA);
+				SQLiteDatabase db = databaseOpenHelper.getWritableDatabase();
+				db.delete(Handshakes.TABLE_NAME, Handshakes.TIMESTAMP + "<?",
+						new String[] { "" + lastDayToKeep.getStartOfDayTimestamp() });
+			}
+		});
+	}
+
+	private void addContact(Contact contact) {
+		SQLiteDatabase db = databaseOpenHelper.getWritableDatabase();
+		ContentValues values = new ContentValues();
+		values.put(Contacts.EPHID, contact.getEphId());
+		values.put(Contacts.DATE, contact.getDate().getStartOfDayTimestamp());
+		db.insert(Contacts.TABLE_NAME, null, values);
+	}
+
+	public List<Contact> getContacts() {
+		SQLiteDatabase db = databaseOpenHelper.getReadableDatabase();
+		Cursor cursor = db
+				.query(Contacts.TABLE_NAME, Contacts.PROJECTION, null, null, null, null, Contacts.ID);
+		return getContactsFromCursor(cursor);
+	}
+
+	public List<Contact> getContacts(DayDate dayDate) {
+		SQLiteDatabase db = databaseOpenHelper.getReadableDatabase();
+		Cursor cursor = db
+				.query(Contacts.TABLE_NAME, Contacts.PROJECTION, Contacts.DATE + "=?",
+						new String[] { "" + dayDate.getStartOfDayTimestamp() }, null, null, Contacts.ID);
+		return getContactsFromCursor(cursor);
+	}
+
+	private List<Contact> getContactsFromCursor(Cursor cursor) {
+		List<Contact> contacts = new ArrayList<>();
+		while (cursor.moveToNext()) {
+			int id = cursor.getInt(cursor.getColumnIndexOrThrow(Contacts.ID));
+			DayDate date = new DayDate(cursor.getLong(cursor.getColumnIndexOrThrow(Contacts.DATE)));
+			byte[] ephid = cursor.getBlob(cursor.getColumnIndexOrThrow(Contacts.EPHID));
+			int associatedKnownCase = cursor.getInt(cursor.getColumnIndexOrThrow(Contacts.ASSOCIATED_KNOWN_CASE));
+			Contact contact = new Contact(id, date, ephid, associatedKnownCase);
+			contacts.add(contact);
+		}
+		return contacts;
+	}
+
 	public boolean wasContactExposed() {
-		for (HandShake handshake : getHandshakes()) {
-			if (handshake.getAssociatedKnownCase() != 0) {
+		for (Contact contact : getContacts()) {
+			if (contact.getAssociatedKnownCase() != 0) {
 				return true;
 			}
 		}

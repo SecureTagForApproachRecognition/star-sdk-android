@@ -5,7 +5,6 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk.database;
 
 interface KnownCases {
@@ -13,20 +12,20 @@ interface KnownCases {
 	String TABLE_NAME = "known_cases";
 
 	String ID = "id";
-	String DAY = "day";
+	String ONSET = "onset";
+	String BUCKET_DAY = "day";
 	String KEY = "key";
 
 	String[] PROJECTION = {
 			ID,
-			DAY,
+			ONSET,
+			BUCKET_DAY,
 			KEY,
 	};
 
-	String WHERE_DAY = DAY + " = ? ";
-
 	static String create() {
-		return "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" + ID + " INTEGER PRIMARY KEY NOT NULL, " + DAY +
-				" TEXT NOT NULL, " + KEY + " BLOB NOT NULL)";
+		return "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" + ID + " INTEGER PRIMARY KEY NOT NULL, " + ONSET +
+				" INTEGER NOT NULL," + BUCKET_DAY + " INTEGER NOT NULL, " + KEY + " BLOB NOT NULL)";
 	}
 
 	static String drop() {

@@ -16,7 +16,7 @@ import java.util.*;
 
 import ch.ubique.android.starsdk.AppConfigManager;
 import ch.ubique.android.starsdk.database.Database;
-import ch.ubique.android.starsdk.database.models.HandShake;
+import ch.ubique.android.starsdk.database.models.Handshake;
 import ch.ubique.android.starsdk.sample.R;
 
 public class HandshakesFragment extends Fragment {
@@ -60,12 +60,12 @@ public class HandshakesFragment extends Fragment {
 			SimpleDateFormat sdf = new SimpleDateFormat("dd.MM HH:mm:ss");
 			if (raw) {
 				Collections.sort(response, (h1, h2) -> Long.compare(h2.getTimestamp(), h1.getTimestamp()));
-				for (HandShake handShake : response) {
+				for (Handshake handShake : response) {
 					stringBuilder.append(sdf.format(new Date(handShake.getTimestamp())));
 					stringBuilder.append(" ");
 					stringBuilder.append(handShake.getMacAddress());
 					stringBuilder.append(" ");
-					stringBuilder.append(new String(Base64.encode(handShake.getStar(), Base64.NO_WRAP)).substring(0, 10));
+					stringBuilder.append(new String(Base64.encode(handShake.getEphId(), Base64.NO_WRAP)).substring(0, 10));
 					stringBuilder.append("...");
 					stringBuilder.append(" TxPowerLevel: ");
 					stringBuilder.append(handShake.getTxPowerLevel());
@@ -91,13 +91,13 @@ public class HandshakesFragment extends Fragment {
 		});
 	}
 
-	private List<HandshakeInterval> mergeHandshakes(List<HandShake> handshakes) {
+	private List<HandshakeInterval> mergeHandshakes(List<Handshake> handshakes) {
 
-		HashMap<String, List<HandShake>> groupedHandshakes = new HashMap<>();
-		for (HandShake handshake : handshakes) {
+		HashMap<String, List<Handshake>> groupedHandshakes = new HashMap<>();
+		for (Handshake handshake : handshakes) {
 			byte[] head = new byte[4];
 			for (int i = 0; i < 4; i++) {
-				head[i] = handshake.getStar()[i];
+				head[i] = handshake.getEphId()[i];
 			}
 			String identifier = new String(head);
 			if (!groupedHandshakes.containsKey(identifier)) {
@@ -108,7 +108,7 @@ public class HandshakesFragment extends Fragment {
 
 		long scanInterval = AppConfigManager.getInstance(getContext()).getScanInterval();
 		List<HandshakeInterval> result = new ArrayList<>();
-		for (Map.Entry<String, List<HandShake>> entry : groupedHandshakes.entrySet()) {
+		for (Map.Entry<String, List<Handshake>> entry : groupedHandshakes.entrySet()) {
 			Collections.sort(entry.getValue(), (h1, h2) -> Long.compare(h1.getTimestamp(), h2.getTimestamp()));
 			int start = 0;
 			int end = 1;
