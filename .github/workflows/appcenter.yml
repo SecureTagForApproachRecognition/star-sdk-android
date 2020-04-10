@@ -3,6 +3,8 @@ name: Android CI
 on:
   push:
     branches: [ master, develop ]
+  pull_request:
+    branches: [ develop ]
 
 jobs:
   build:
@@ -24,4 +26,4 @@ jobs:
         appName: SecureTagForApproachRecognition/STAR-SDK-Android-Calibration-App
         token: ${{secrets.APP_CENTER_TOKEN}}
         group: Internal
-        file: sample/app/build/outputs/apk/release/app-release-unsigned.apk
+        file: sample/app/build/outputs/apk/release/app-release.apk
