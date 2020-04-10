@@ -14,7 +14,6 @@ interface Handshakes {
 	String ID = "id";
 	String TIMESTAMP = "timestamp";
 	String EPHID = "ephid";
-	String MAC_ADDRESS = "macaddress";
 	String TX_POWER_LEVEL = "tx_power_level";
 	String RSSI = "rssi";
 
@@ -22,7 +21,6 @@ interface Handshakes {
 			ID,
 			TIMESTAMP,
 			EPHID,
-			MAC_ADDRESS,
 			TX_POWER_LEVEL,
 			RSSI
 	};
@@ -30,7 +28,7 @@ interface Handshakes {
 	static String create() {
 		return "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" + ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
 				TIMESTAMP + " INTEGER NOT NULL, " + EPHID + " BLOB NOT NULL, " +
-				MAC_ADDRESS + " TEXT, " + TX_POWER_LEVEL + " INTEGER, " + RSSI + " INTEGER)";
+				TX_POWER_LEVEL + " INTEGER, " + RSSI + " INTEGER)";
 	}
 
 	static String drop() {

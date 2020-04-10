@@ -117,7 +117,7 @@ public class GattConnectionTask {
 			String base64String = new String(Base64.encode(starValue, Base64.NO_WRAP));
 			Log.e("received", base64String);
 			new Database(context)
-					.addHandshake(context, starValue, "GATT" + macAddress, rxPowerLevel, rssi, System.currentTimeMillis());
+					.addHandshake(context, starValue, rxPowerLevel, rssi, System.currentTimeMillis());
 			Logger.d(TAG, "received " + base64String);
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -12,15 +12,13 @@ public class Handshake {
 	private int id;
 	private long timestamp;
 	private byte[] star;
-	private String macAddress;
 	private int txPowerLevel;
 	private int rssi;
 
-	public Handshake(int id, long timstamp, byte[] star, String macAddress, int txPowerLevel, int rssi) {
+	public Handshake(int id, long timstamp, byte[] star, int txPowerLevel, int rssi) {
 		this.id = id;
 		this.timestamp = timstamp;
 		this.star = star;
-		this.macAddress = macAddress;
 		this.txPowerLevel = txPowerLevel;
 		this.rssi = rssi;
 	}
@@ -31,10 +29,6 @@ public class Handshake {
 
 	public long getTimestamp() {
 		return timestamp;
-	}
-
-	public String getMacAddress() {
-		return macAddress;
 	}
 
 	public int getTxPowerLevel() {

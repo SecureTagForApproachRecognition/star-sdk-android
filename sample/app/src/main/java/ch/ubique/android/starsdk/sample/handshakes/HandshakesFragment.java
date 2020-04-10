@@ -63,8 +63,6 @@ public class HandshakesFragment extends Fragment {
 				for (Handshake handShake : response) {
 					stringBuilder.append(sdf.format(new Date(handShake.getTimestamp())));
 					stringBuilder.append(" ");
-					stringBuilder.append(handShake.getMacAddress());
-					stringBuilder.append(" ");
 					stringBuilder.append(new String(Base64.encode(handShake.getEphId(), Base64.NO_WRAP)).substring(0, 10));
 					stringBuilder.append("...");
 					stringBuilder.append(" TxPowerLevel: ");

@@ -57,12 +57,11 @@ public class Database {
 		});
 	}
 
-	public void addHandshake(Context context, byte[] star, String macAddress, int txPowerLevel, int rssi, long timestamp) {
+	public void addHandshake(Context context, byte[] star, int txPowerLevel, int rssi, long timestamp) {
 		SQLiteDatabase db = databaseOpenHelper.getWritableDatabase();
 		ContentValues values = new ContentValues();
 		values.put(Handshakes.EPHID, star);
 		values.put(Handshakes.TIMESTAMP, timestamp);
-		values.put(Handshakes.MAC_ADDRESS, macAddress);
 		values.put(Handshakes.TX_POWER_LEVEL, txPowerLevel);
 		values.put(Handshakes.RSSI, rssi);
 		databaseThread.post(() -> {
@@ -80,10 +79,9 @@ public class Database {
 				int id = cursor.getInt(cursor.getColumnIndexOrThrow(Handshakes.ID));
 				long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(Handshakes.TIMESTAMP));
 				byte[] star = cursor.getBlob(cursor.getColumnIndexOrThrow(Handshakes.EPHID));
-				String macAddress = cursor.getString(cursor.getColumnIndexOrThrow(Handshakes.MAC_ADDRESS));
 				int txPowerLevel = cursor.getInt(cursor.getColumnIndexOrThrow(Handshakes.TX_POWER_LEVEL));
 				int rssi = cursor.getInt(cursor.getColumnIndexOrThrow(Handshakes.RSSI));
-				Handshake handShake = new Handshake(id, timestamp, star, macAddress, txPowerLevel, rssi);
+				Handshake handShake = new Handshake(id, timestamp, star, txPowerLevel, rssi);
 				handshakes.add(handShake);
 			}
 		}
