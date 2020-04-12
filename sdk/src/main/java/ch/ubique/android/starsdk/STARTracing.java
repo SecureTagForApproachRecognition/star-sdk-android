@@ -174,7 +174,7 @@ public class STARTracing {
 		appConfigManager.setReceivingEnabled(false);
 
 		Intent intent = new Intent(context, TracingService.class).setAction(TracingService.ACTION_STOP);
-		context.stopService(intent);
+		context.startService(intent);
 		SyncWorker.stopSyncWorker(context);
 	}
 
