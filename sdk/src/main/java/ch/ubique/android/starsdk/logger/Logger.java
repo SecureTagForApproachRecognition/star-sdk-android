@@ -5,6 +5,7 @@ import android.content.Context;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Logger {
@@ -59,6 +60,13 @@ public class Logger {
 		if (instance != null) {
 			instance.database.clear();
 		}
+	}
+
+	public static List<String> getTags() {
+		if (instance != null) {
+			return instance.database.getTags();
+		}
+		return Collections.emptyList();
 	}
 
 	private void log(LogLevel level, String tag, String message) {
