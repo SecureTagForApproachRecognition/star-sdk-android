@@ -116,9 +116,6 @@ public class BleClient {
 				Logger.d(TAG, "No power levels found for (" + scanResult.getDevice().getName() + "), use default of 12dbm");
 				power = 12;
 			}
-			double distance = calculateDistance(power, scanResult.getRssi());
-			Logger.d(TAG, "Distance to device (" + scanResult.getDevice().getAddress() + "): " + String.valueOf(distance) +
-					"m");
 
 			deviceLastConnected.put(bluetoothDevice.getAddress(), System.currentTimeMillis());
 
@@ -136,10 +133,6 @@ public class BleClient {
 			t.printStackTrace();
 			Logger.e(TAG, t);
 		}
-	}
-
-	private static double calculateDistance(int txPower, int rssi) {
-		return Math.pow(10, (txPower - rssi) / 20.0) / 1000.0;
 	}
 
 	public synchronized void stopScan() {
