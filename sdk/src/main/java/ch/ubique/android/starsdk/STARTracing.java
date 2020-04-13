@@ -28,6 +28,7 @@ import ch.ubique.android.starsdk.backend.models.ExposeeRequest;
 import ch.ubique.android.starsdk.crypto.STARModule;
 import ch.ubique.android.starsdk.database.Database;
 import ch.ubique.android.starsdk.logger.Logger;
+import ch.ubique.android.starsdk.util.DayDate;
 import ch.ubique.android.starsdk.util.ProcessUtil;
 
 public class STARTracing {
@@ -144,18 +145,20 @@ public class STARTracing {
 		return errors;
 	}
 
-	public static void sendIWasExposed(Context context, Date date, ExposeeAuthData exposeeAuthData,
+	public static void sendIWasExposed(Context context, Date onset, ExposeeAuthData exposeeAuthData,
 			CallbackListener<Void> callback) {
 		checkInit();
+		DayDate onsetDate = new DayDate(onset.getTime());
+		ExposeeRequest exposeeRequest = STARModule.getInstance(context).getSecretKeyForPublishing(onsetDate, exposeeAuthData);
+
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
 		appConfigManager.getBackendRepository(context)
-				.addExposee(new ExposeeRequest(STARModule.getInstance(context).getSecretKeyForBackend(date),
-								date,
-								exposeeAuthData),
+				.addExposee(exposeeRequest,
 						new CallbackListener<Void>() {
 							@Override
 							public void onSuccess(Void response) {
 								appConfigManager.setAmIExposed(true);
+								STARModule.getInstance(context).reset();
 								callback.onSuccess(response);
 							}
 

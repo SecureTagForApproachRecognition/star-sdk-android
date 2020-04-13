@@ -5,37 +5,27 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk.backend.models;
 
-import androidx.annotation.Nullable;
+import ch.ubique.android.starsdk.util.DayDate;
 
 public class Exposee {
 
 	private String key;
 
-	@Nullable
-	private Action action;
+	private DayDate onset;
 
-	@Nullable
-	private int id;
-
-	public Exposee(String key) {
+	public Exposee(String key, DayDate onset) {
 		this.key = key;
+		this.onset = onset;
 	}
 
 	public String getKey() {
 		return key;
 	}
 
-	@Nullable
-	public Action getAction() {
-		return action;
-	}
-
-	@Nullable
-	public int getId() {
-		return id;
+	public DayDate getOnset() {
+		return onset;
 	}
 
 }

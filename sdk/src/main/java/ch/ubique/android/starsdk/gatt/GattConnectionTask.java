@@ -4,13 +4,14 @@ import android.bluetooth.*;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.os.Build;
-import android.util.Base64;
 import android.util.Log;
 
 import java.util.Arrays;
 
 import ch.ubique.android.starsdk.database.Database;
 import ch.ubique.android.starsdk.logger.Logger;
+
+import static ch.ubique.android.starsdk.util.Base64Util.toBase64;
 
 public class GattConnectionTask {
 
@@ -114,10 +115,10 @@ public class GattConnectionTask {
 
 	public void addHandshakeToDatabase(byte[] starValue, String macAddress, int rxPowerLevel, int rssi) {
 		try {
-			String base64String = new String(Base64.encode(starValue, Base64.NO_WRAP));
-			Log.e("received", base64String);
+			String base64String = toBase64(starValue);
+			Log.d("received", base64String);
 			new Database(context)
-					.addHandshake(context, starValue, "GATT" + macAddress, rxPowerLevel, rssi, System.currentTimeMillis());
+					.addHandshake(context, starValue, rxPowerLevel, rssi, System.currentTimeMillis());
 			Logger.d(TAG, "received " + base64String);
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -10,15 +10,12 @@ package ch.ubique.android.starsdk.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.net.Uri;
 import androidx.annotation.NonNull;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
 
 class DatabaseOpenHelper extends SQLiteOpenHelper {
 
@@ -55,10 +52,12 @@ class DatabaseOpenHelper extends SQLiteOpenHelper {
 
 	public void recreateTables(@NonNull SQLiteDatabase db) {
 		new Transaction(db,
+				Contacts.drop(),
 				KnownCases.drop(),
-				HandShakes.drop(),
+				Handshakes.drop(),
 				KnownCases.create(),
-				HandShakes.create()
+				Handshakes.create(),
+				Contacts.create()
 		).run();
 	}
 

@@ -7,40 +7,28 @@
  */
 package ch.ubique.android.starsdk.database.models;
 
-public class HandShake {
+public class Handshake {
 
 	private int id;
 	private long timestamp;
 	private byte[] star;
-	private String macAddress;
 	private int txPowerLevel;
 	private int rssi;
-	private int associatedKnownCase;
 
-	public HandShake(int id, long timstamp, byte[] star, String macAddress, int txPowerLevel, int rssi, int associatedKnownCase) {
+	public Handshake(int id, long timstamp, byte[] star, int txPowerLevel, int rssi) {
 		this.id = id;
 		this.timestamp = timstamp;
 		this.star = star;
-		this.macAddress = macAddress;
 		this.txPowerLevel = txPowerLevel;
 		this.rssi = rssi;
-		this.associatedKnownCase = associatedKnownCase;
 	}
 
-	public byte[] getStar() {
+	public byte[] getEphId() {
 		return star;
 	}
 
 	public long getTimestamp() {
 		return timestamp;
-	}
-
-	public String getMacAddress() {
-		return macAddress;
-	}
-
-	public int getAssociatedKnownCase() {
-		return associatedKnownCase;
 	}
 
 	public int getTxPowerLevel() {

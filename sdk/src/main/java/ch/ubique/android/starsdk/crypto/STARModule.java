@@ -9,7 +9,6 @@ package ch.ubique.android.starsdk.crypto;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Base64;
 import android.util.Pair;
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKeys;
@@ -22,7 +21,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -34,24 +32,27 @@ import javax.crypto.spec.SecretKeySpec;
 
 import com.google.gson.Gson;
 
-import static ch.ubique.android.starsdk.crypto.TimeUtils.convertToDay;
-import static ch.ubique.android.starsdk.crypto.TimeUtils.getNextDay;
+import ch.ubique.android.starsdk.backend.models.ExposeeAuthData;
+import ch.ubique.android.starsdk.backend.models.ExposeeRequest;
+import ch.ubique.android.starsdk.database.models.Contact;
+import ch.ubique.android.starsdk.util.DayDate;
 
-public class STARModule implements STARInterface {
+import static ch.ubique.android.starsdk.util.Base64Util.toBase64;
+
+public class STARModule {
 
 	public static final int KEY_LENGTH = 26;
 
-	private static final int NUMBER_OF_DAYS_TO_KEEP_SK = 21;
+	public static final int NUMBER_OF_DAYS_TO_KEEP_DATA = 21;
 	private static final int NUMBER_OF_EPOCHS_PER_DAY = 24 * 12;
 	private static final int MILLISECONDS_PER_EPOCH = 24 * 60 * 60 * 1000 / NUMBER_OF_EPOCHS_PER_DAY;
 	//TODO set correct broadcast key
 	private static final byte[] BROADCAST_KEY = "TODOTODOTODOTODOTODOTODOTODOTODOTODO".getBytes();
 
+
 	private static final String KEY_SK_LIST_JSON = "SK_LIST_JSON";
 	private static STARModule instance;
 	private SharedPreferences esp;
-
-	private byte[] debugKey = "key".getBytes();
 
 	public static STARModule getInstance(Context context) {
 		if (instance == null) {
@@ -70,7 +71,6 @@ public class STARModule implements STARInterface {
 		return instance;
 	}
 
-	@Override
 	public boolean init() {
 		try {
 			String stringKey = esp.getString(KEY_SK_LIST_JSON, null);
@@ -79,7 +79,7 @@ public class STARModule implements STARInterface {
 			KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
 			SecretKey secretKey = keyGenerator.generateKey();
 			SKList skList = new SKList();
-			skList.add(new Pair(convertToDay(System.currentTimeMillis()), secretKey.getEncoded()));
+			skList.add(new Pair(new DayDate(System.currentTimeMillis()), secretKey.getEncoded()));
 			storeSKList(skList);
 			return true;
 		} catch (Exception ex) {
@@ -97,7 +97,7 @@ public class STARModule implements STARInterface {
 		esp.edit().putString(KEY_SK_LIST_JSON, new Gson().toJson(skList)).commit();
 	}
 
-	private byte[] getSKt1(byte[] SKt0) {
+	protected byte[] getSKt1(byte[] SKt0) {
 		try {
 			MessageDigest digest = MessageDigest.getInstance("SHA-256");
 			byte[] SKt1 = digest.digest(SKt0);
@@ -109,40 +109,39 @@ public class STARModule implements STARInterface {
 
 	private void rotateSK() {
 		SKList skList = getSKList();
-		long nextDay = getNextDay(skList.get(0).first);
+		DayDate nextDay = skList.get(0).first.getNextDay();
 		byte[] SKt1 = getSKt1(skList.get(0).second);
 		skList.add(0, new Pair(nextDay, SKt1));
-		List subList = skList.subList(0, Math.min(NUMBER_OF_DAYS_TO_KEEP_SK, skList.size()));
+		List subList = skList.subList(0, Math.min(NUMBER_OF_DAYS_TO_KEEP_DATA, skList.size()));
 		skList = new SKList();
 		skList.addAll(subList);
 		storeSKList(skList);
 	}
 
-	private byte[] getCurrentSK(long day) {
-		List<Pair<Long, byte[]>> SKList = getSKList();
-		while (SKList.get(0).first < day) {
+	protected byte[] getCurrentSK(DayDate day) {
+		SKList SKList = getSKList();
+		while (SKList.get(0).first.isBefore(day)) {
 			rotateSK();
 			SKList = getSKList();
 		}
-		assert SKList.get(0).first == day;
+		assert SKList.get(0).first.equals(day);
 		return SKList.get(0).second;
 	}
 
-	private List<byte[]> createEphIds(byte[] SK) {
+	protected List<byte[]> createEphIds(byte[] SK) {
 		try {
 			Mac mac = Mac.getInstance("HmacSHA256");
 			mac.init(new SecretKeySpec(SK, "HmacSHA256"));
 			mac.update(BROADCAST_KEY);
-			byte[] keyBytes = mac.doFinal();
-
-			byte[] emptyArray = new byte[KEY_LENGTH];
+			byte[] prf = mac.doFinal();
 
 			//generate EphIDs
-			SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+			SecretKeySpec keySpec = new SecretKeySpec(prf, "AES");
 			Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
 			byte[] counter = new byte[16];
 			cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(counter));
 			ArrayList<byte[]> ephIds = new ArrayList<>();
+			byte[] emptyArray = new byte[KEY_LENGTH];
 			for (int i = 0; i < NUMBER_OF_EPOCHS_PER_DAY; i++) {
 				ephIds.add(cipher.update(emptyArray));
 			}
@@ -152,45 +151,95 @@ public class STARModule implements STARInterface {
 		}
 	}
 
-	@Override
+	private int getEpochCounter(long time) {
+		DayDate day = new DayDate(time);
+		return (int) (time - day.getStartOfDayTimestamp()) / MILLISECONDS_PER_EPOCH;
+	}
+
+	public long getCurrentEpochStart() {
+		long now = System.currentTimeMillis();
+		DayDate currentDay = new DayDate(now);
+		return currentDay.getStartOfDayTimestamp() + getEpochCounter(now) * MILLISECONDS_PER_EPOCH;
+	}
+
 	public byte[] getCurrentEphId() {
 		long now = System.currentTimeMillis();
-		long currentDay = convertToDay(now);
+		DayDate currentDay = new DayDate(now);
 		byte[] SK = getCurrentSK(currentDay);
-		int counter = (int) (now - currentDay) / MILLISECONDS_PER_EPOCH;
-		return createEphIds(SK).get(counter);
+		return createEphIds(SK).get(getEpochCounter(now));
 	}
 
-	@Override
-	public boolean isKeyMatchingEphId(byte[] key, byte[] ephId) {
-		for (byte[] id : createEphIds(key)) {
-			if (Arrays.equals(id, ephId)) {
-				return true;
+	public void checkContacts(byte[] sk, DayDate onsetDate, DayDate bucketDate, GetContactsCallback contactCallback,
+			MatchCallback matchCallback) {
+
+		DayDate dayToTest = onsetDate;
+		byte[] skForDay = sk;
+		while (dayToTest.isBeforeOrEquals(bucketDate)) {
+
+			List<Contact> contactsOnDay = contactCallback.getContacts(dayToTest);
+			if (contactsOnDay.size() > 0) {
+
+				//generate all ephIds for day
+				List<byte[]> ephIds = createEphIds(skForDay);
+
+				//check all contacts if they match any of the ephIds
+				for (Contact contact : contactsOnDay) {
+					for (byte[] ephId : ephIds) {
+						if (Arrays.equals(ephId, contact.getEphId())) {
+							matchCallback.contactMatched(contact);
+							break;
+						}
+					}
+				}
+			}
+
+			//update day to next day and rotate sk accordingly
+			dayToTest = dayToTest.getNextDay();
+			skForDay = getSKt1(skForDay);
+		}
+	}
+
+	public ExposeeRequest getSecretKeyForPublishing(DayDate date, ExposeeAuthData exposeeAuthData) {
+		SKList skList = getSKList();
+		for (Pair<DayDate, byte[]> daySKPair : skList) {
+			if (daySKPair.first.equals(date)) {
+				return new ExposeeRequest(
+						toBase64(daySKPair.second),
+						daySKPair.first,
+						exposeeAuthData);
 			}
 		}
-		return false;
-	}
-
-	@Override
-	public String getSecretKeyForBackend(Date date) {
-		long day = convertToDay(date.getTime());
-		for (Pair<Long, byte[]> daySKPair : getSKList()) {
-			if (daySKPair.first == day) {
-				return new String(Base64.encode(daySKPair.second, Base64.NO_WRAP));
-			}
+		if (date.isBefore(skList.get(skList.size() - 1).first)) {
+			return new ExposeeRequest(
+					toBase64(skList.get(skList.size() - 1).second),
+					skList.get(skList.size() - 1).first,
+					exposeeAuthData);
 		}
 		return null;
 	}
 
-	@Override
 	public void reset() {
 		try {
 			SharedPreferences.Editor editor = esp.edit();
 			editor.clear();
 			editor.commit();
+			init();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	public interface GetContactsCallback {
+
+		List<Contact> getContacts(DayDate date);
+
+	}
+
+
+	public interface MatchCallback {
+
+		void contactMatched(Contact contact);
+
 	}
 
 }

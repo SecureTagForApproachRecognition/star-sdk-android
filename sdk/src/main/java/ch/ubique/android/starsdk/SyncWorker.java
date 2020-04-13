@@ -8,32 +8,23 @@
 package ch.ubique.android.starsdk;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.util.Base64;
 import androidx.annotation.NonNull;
 import androidx.work.*;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import ch.ubique.android.starsdk.backend.BackendRepository;
 import ch.ubique.android.starsdk.backend.ResponseException;
-import ch.ubique.android.starsdk.backend.models.Action;
 import ch.ubique.android.starsdk.backend.models.Application;
 import ch.ubique.android.starsdk.backend.models.ExposedList;
 import ch.ubique.android.starsdk.backend.models.Exposee;
 import ch.ubique.android.starsdk.database.Database;
+import ch.ubique.android.starsdk.util.DayDate;
 
 public class SyncWorker extends Worker {
 
 	private static final String TAG = "ch.ubique.android.starsdk.SyncWorker";
-
-	private static final String PREFS_LAST_KNOWN = "lastKnownPrefs";
-	private static final String PREF_LAST_KNOWN_ID = "knownId";
 
 	public static void startSyncWorker(Context context) {
 		Constraints constraints = new Constraints.Builder()
@@ -80,44 +71,32 @@ public class SyncWorker extends Worker {
 		Application appConfig = appConfigManager.getAppConfig();
 
 		Database database = new Database(context);
+		database.generateContactsFromHandshakes(context);
+
 		BackendRepository backendRepository =
 				new BackendRepository(context, appConfig.getBackendBaseUrl(), appConfig.getListBaseUrl());
 
-		SharedPreferences prefs = context.getSharedPreferences(PREFS_LAST_KNOWN, Context.MODE_PRIVATE);
-		int lastKnownId = prefs.getInt(PREF_LAST_KNOWN_ID, -1);
-		int newMaxId = lastKnownId;
-
-		Calendar cal = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-		long currentTime = cal.getTimeInMillis();
-		cal.add(Calendar.DATE, -14);
-		SimpleDateFormat sdf = new SimpleDateFormat("YYYYMMdd");
+		DayDate dateToLoad = new DayDate();
+		dateToLoad = dateToLoad.subtractDays(14);
 
 		for (int i = 0; i <= 14; i++) {
-			//TODO use ETAG for already loaded stuff
-			String day = sdf.format(cal.getTime());
 
-			ExposedList exposedList = backendRepository.getExposees(day);
+			ExposedList exposedList = backendRepository.getExposees(dateToLoad);
 			for (Exposee exposee : exposedList.getExposed()) {
-				if (exposee.getId() > lastKnownId) {
-					if (exposee.getAction() == Action.ADD) {
-						database.addKnownCase(
-								context,
-								Base64.decode(exposee.getKey(), Base64.NO_WRAP),
-								day
-						);
-					} else {
-						//TODO remove known case
-					}
-					newMaxId = Math.max(newMaxId, exposee.getId());
-				}
+				database.addKnownCase(
+						context,
+						exposee.getKey(),
+						exposee.getOnset(),
+						dateToLoad
+				);
 			}
 
-			cal.add(Calendar.DATE, 1);
-			lastKnownId = newMaxId;
-			prefs.edit().putInt(PREF_LAST_KNOWN_ID, lastKnownId).apply();
+			dateToLoad = dateToLoad.getNextDay();
 		}
 
-		appConfigManager.setLastSyncDate(currentTime);
+		database.removeOldKnownCases();
+
+		appConfigManager.setLastSyncDate(System.currentTimeMillis());
 	}
 
 }
