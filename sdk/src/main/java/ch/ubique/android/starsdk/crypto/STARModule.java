@@ -133,16 +133,15 @@ public class STARModule {
 			Mac mac = Mac.getInstance("HmacSHA256");
 			mac.init(new SecretKeySpec(SK, "HmacSHA256"));
 			mac.update(BROADCAST_KEY);
-			byte[] keyBytes = mac.doFinal();
-
-			byte[] emptyArray = new byte[KEY_LENGTH];
+			byte[] prf = mac.doFinal();
 
 			//generate EphIDs
-			SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+			SecretKeySpec keySpec = new SecretKeySpec(prf, "AES");
 			Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
 			byte[] counter = new byte[16];
 			cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(counter));
 			ArrayList<byte[]> ephIds = new ArrayList<>();
+			byte[] emptyArray = new byte[KEY_LENGTH];
 			for (int i = 0; i < NUMBER_OF_EPOCHS_PER_DAY; i++) {
 				ephIds.add(cipher.update(emptyArray));
 			}
