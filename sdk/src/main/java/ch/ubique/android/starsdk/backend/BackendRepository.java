@@ -44,7 +44,7 @@ public class BackendRepository implements Repository {
 
 	@Nullable
 	public ExposedList getExposees(@NonNull DayDate dayDate) throws IOException, ResponseException {
-		String url = listBaseUrl + "v1/exposed/" + dayDate.formatAsLegacyString();
+		String url = listBaseUrl + "v1/exposed/" + dayDate.formatAsString();
 		Response<ExposedList> response = backendService.getExposees(url).execute();
 		if (response.isSuccessful()) {
 			return response.body();
