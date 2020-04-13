@@ -5,7 +5,6 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk.backend;
 
 import android.content.Context;
@@ -14,6 +13,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import androidx.annotation.NonNull;
 
+import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
@@ -40,6 +40,10 @@ interface Repository {
 					.build();
 			return chain.proceed(request);
 		});
+
+		int cacheSize = 50 * 1024 * 1024; // 50 MB
+		Cache cache = new Cache(context.getCacheDir(), cacheSize);
+		okHttpBuilder.cache(cache);
 
 		return okHttpBuilder;
 	}
