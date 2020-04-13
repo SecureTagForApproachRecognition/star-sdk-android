@@ -24,6 +24,9 @@ import ch.ubique.android.starsdk.database.models.Contact;
 import ch.ubique.android.starsdk.database.models.Handshake;
 import ch.ubique.android.starsdk.util.DayDate;
 
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE;
+import static ch.ubique.android.starsdk.util.Base64Util.fromBase64;
+
 public class Database {
 
 	private static final boolean KEEP_HANDSHAKES_FOR_DEEBUG_PURPOSES = true;
@@ -36,7 +39,7 @@ public class Database {
 		databaseThread = DatabaseThread.getInstance(context);
 	}
 
-	public void addKnownCase(Context context, @NonNull byte[] key, @NonNull DayDate onsetDate, @NonNull DayDate bucketDate) {
+	public void addKnownCase(Context context, @NonNull String key, @NonNull DayDate onsetDate, @NonNull DayDate bucketDate) {
 		SQLiteDatabase db = databaseOpenHelper.getWritableDatabase();
 		ContentValues values = new ContentValues();
 		values.put(KnownCases.KEY, key);
@@ -44,11 +47,15 @@ public class Database {
 		values.put(KnownCases.BUCKET_DAY, bucketDate.getStartOfDayTimestamp());
 		databaseThread.post(() -> {
 
-			//TODO check if already inserted
-			long idOfAddedCase = db.insert(KnownCases.TABLE_NAME, null, values);
+			long idOfAddedCase = db.insertWithOnConflict(KnownCases.TABLE_NAME, null, values, CONFLICT_IGNORE);
+
+			if (idOfAddedCase == -1) {
+				//key was already in the database, so we can ignore it
+				return;
+			}
 
 			STARModule starModule = STARModule.getInstance(context);
-			starModule.checkContacts(key, onsetDate, bucketDate, (date) -> getContacts(date), (contact) -> {
+			starModule.checkContacts(fromBase64(key), onsetDate, bucketDate, (date) -> getContacts(date), (contact) -> {
 				ContentValues updateValues = new ContentValues();
 				updateValues.put(Contacts.ASSOCIATED_KNOWN_CASE, idOfAddedCase);
 				db.update(Contacts.TABLE_NAME, updateValues, Contacts.ID + "=" + contact.getId(), null);

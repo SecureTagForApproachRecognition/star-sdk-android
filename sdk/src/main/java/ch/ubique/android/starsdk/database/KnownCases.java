@@ -20,12 +20,13 @@ interface KnownCases {
 			ID,
 			ONSET,
 			BUCKET_DAY,
-			KEY,
+			KEY
 	};
 
 	static String create() {
 		return "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" + ID + " INTEGER PRIMARY KEY NOT NULL, " + ONSET +
-				" INTEGER NOT NULL," + BUCKET_DAY + " INTEGER NOT NULL, " + KEY + " BLOB NOT NULL)";
+				" INTEGER NOT NULL," + BUCKET_DAY + " INTEGER NOT NULL, " + KEY + " TEXT NOT NULL, "
+				+ "CONSTRAINT no_duplicates UNIQUE (" + BUCKET_DAY + ", " + KEY + ") )";
 	}
 
 	static String drop() {

@@ -41,6 +41,14 @@ public class DayDate {
 		}
 	}
 
+	@Deprecated
+	public String formatAsLegacyString() {
+		SimpleDateFormat dayDateFormat = new SimpleDateFormat("yyyyMMdd");
+		synchronized (dayDateFormat) {
+			return dayDateFormat.format(new Date(timestampRepresentation));
+		}
+	}
+
 	public DayDate getNextDay() {
 		Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
 		calendar.setTimeInMillis(timestampRepresentation);

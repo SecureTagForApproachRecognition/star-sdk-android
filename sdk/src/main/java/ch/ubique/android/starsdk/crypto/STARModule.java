@@ -32,6 +32,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import com.google.gson.Gson;
 
+import ch.ubique.android.starsdk.backend.models.ExposeeAuthData;
+import ch.ubique.android.starsdk.backend.models.ExposeeRequest;
 import ch.ubique.android.starsdk.database.models.Contact;
 import ch.ubique.android.starsdk.util.DayDate;
 
@@ -187,15 +189,21 @@ public class STARModule {
 		}
 	}
 
-	public String getSecretKeyForPublishing(DayDate date) {
+	public ExposeeRequest getSecretKeyForPublishing(DayDate date, ExposeeAuthData exposeeAuthData) {
 		SKList skList = getSKList();
 		for (Pair<DayDate, byte[]> daySKPair : skList) {
 			if (daySKPair.first.equals(date)) {
-				return toBase64(daySKPair.second);
+				return new ExposeeRequest(
+						toBase64(daySKPair.second),
+						daySKPair.first,
+						exposeeAuthData);
 			}
 		}
 		if (date.isBefore(skList.get(skList.size() - 1).first)) {
-			return toBase64(skList.get(skList.size() - 1).second);
+			return new ExposeeRequest(
+					toBase64(skList.get(skList.size() - 1).second),
+					skList.get(skList.size() - 1).first,
+					exposeeAuthData);
 		}
 		return null;
 	}

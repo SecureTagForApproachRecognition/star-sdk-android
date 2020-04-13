@@ -149,10 +149,7 @@ public class STARTracing {
 			CallbackListener<Void> callback) {
 		checkInit();
 		DayDate onsetDate = new DayDate(onset.getTime());
-		ExposeeRequest exposeeRequest = new ExposeeRequest(
-				STARModule.getInstance(context).getSecretKeyForPublishing(onsetDate),
-				onsetDate,
-				exposeeAuthData);
+		ExposeeRequest exposeeRequest = STARModule.getInstance(context).getSecretKeyForPublishing(onsetDate, exposeeAuthData);
 
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
 		appConfigManager.getBackendRepository(context)

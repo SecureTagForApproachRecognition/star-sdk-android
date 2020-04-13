@@ -88,7 +88,7 @@ public class SyncWorker extends Worker {
 			for (Exposee exposee : exposedList.getExposed()) {
 				database.addKnownCase(
 						context,
-						fromBase64(exposee.getKey()),
+						exposee.getKey(),
 						exposee.getOnset(),
 						dateToLoad
 				);
