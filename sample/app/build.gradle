@@ -11,6 +11,8 @@ android {
 		versionCode 1
 		versionName "1.0"
 
+		missingDimensionStrategy 'version', 'callibration'
+
 		testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 	}
 
@@ -45,7 +47,7 @@ android {
 dependencies {
 	implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-	implementation project(path: ":starsdk", configuration: "callibrationDebug")
+	implementation project(':starsdk')
 
 	implementation 'androidx.appcompat:appcompat:1.1.0'
 	implementation 'androidx.core:core:1.2.0'
