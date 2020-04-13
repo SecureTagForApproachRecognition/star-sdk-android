@@ -35,7 +35,8 @@ public class AppConfigManager {
 
 	public static final long DEFAULT_SCAN_INTERVAL = 5 * 60 * 1000L;
 	private static final long DEFAULT_SCAN_DURATION = 30 * 1000L;
-	private static final int DEFAULT_BLUETOOTH_POWER_LEVEL = 4;
+	private static final int DEFAULT_BLUETOOTH_POWER_LEVEL = BluetoothTxPowerLevel.ADVERTISE_TX_POWER_LOW.getValue();
+	private static final int DEFAULT_BLUETOOTH_ADVERTISE_MODE = BluetoothAdvertiseMode.ADVERTISE_MODE_LOW_POWER.getValue();
 
 	private static final String PREF_NAME = "appConfigPreferences";
 	private static final String PREF_APPLICATION_LIST = "applicationList";
@@ -48,6 +49,7 @@ public class AppConfigManager {
 	private static final String PREF_SCAN_INTERVAL = "scanInterval";
 	private static final String PREF_SCAN_DURATION = "scanDuration";
 	private static final String PREF_ADVERTISEMENT_POWER_LEVEL = "advertisementPowerLevel";
+	private static final String PREF_ADVERTISEMENT_MODE = "advertisementMode";
 
 	private String appId;
 	private boolean isDev;
@@ -178,12 +180,20 @@ public class AppConfigManager {
 		return sharedPrefs.getLong(PREF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL);
 	}
 
-	public void setBluetoothPowerLevel(BluetoothPowerLevel powerLevel) {
+	public void setBluetoothPowerLevel(BluetoothTxPowerLevel powerLevel) {
 		sharedPrefs.edit().putInt(PREF_ADVERTISEMENT_POWER_LEVEL, powerLevel.ordinal()).commit();
 	}
 
-	public BluetoothPowerLevel getBluetoothPowerLevel() {
-		return BluetoothPowerLevel.values()[sharedPrefs.getInt(PREF_ADVERTISEMENT_POWER_LEVEL, DEFAULT_BLUETOOTH_POWER_LEVEL)];
+	public BluetoothTxPowerLevel getBluetoothTxPowerLevel() {
+		return BluetoothTxPowerLevel.values()[sharedPrefs.getInt(PREF_ADVERTISEMENT_POWER_LEVEL, DEFAULT_BLUETOOTH_POWER_LEVEL)];
+	}
+
+	public void setBluetoothAdvertiseMode(BluetoothAdvertiseMode advertiseMode) {
+		sharedPrefs.edit().putInt(PREF_ADVERTISEMENT_MODE, advertiseMode.ordinal()).commit();
+	}
+
+	public BluetoothAdvertiseMode getBluetoothAdvertiseMode() {
+		return BluetoothAdvertiseMode.values()[sharedPrefs.getInt(PREF_ADVERTISEMENT_MODE, DEFAULT_BLUETOOTH_ADVERTISE_MODE)];
 	}
 
 	public void clearPreferences() {

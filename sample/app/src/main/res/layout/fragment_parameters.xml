@@ -73,6 +73,19 @@
 		android:layout_height="wrap_content"
 		android:layout_marginTop="@dimen/spacing_large"
 		android:layout_marginBottom="@dimen/spacing_medium"
+		android:text="@string/parameter_advertisement_mode" />
+
+	<Spinner
+		android:id="@+id/parameter_spinner_advertising_mode"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" />
+
+	<TextView
+		style="@style/Sample.Text.Title"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="@dimen/spacing_large"
+		android:layout_marginBottom="@dimen/spacing_medium"
 		android:text="@string/parameter_advertisement_power_level" />
 
 	<Spinner
