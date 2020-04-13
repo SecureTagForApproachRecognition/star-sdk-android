@@ -26,7 +26,6 @@ class LogDatabase {
 		values.put(LogSpec.COLUMN_NAME_MESSAGE, message);
 		values.put(LogSpec.COLUMN_NAME_TIME, time);
 		db.insert(LogSpec.TABLE_NAME, null, values);
-		db.close();
 	}
 
 	List<LogEntry> getLogsSince(long sinceTime) {
@@ -65,14 +64,41 @@ class LogDatabase {
 			cursor.close();
 		}
 
-		db.close();
-
 		return logEntries;
+	}
+
+	List<String> getTags() {
+		SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+		Cursor cursor = db.query(true,
+				LogSpec.TABLE_NAME,
+				new String[] { LogSpec.COLUMN_NAME_TAG },
+				null,
+				null,
+				null,
+				null,
+				LogSpec.COLUMN_NAME_TAG + " ASC",
+				null);
+
+		List<String> tags = new ArrayList<>();
+
+		try {
+			if (cursor.moveToFirst()) {
+				int colIdxTag = cursor.getColumnIndex(LogSpec.COLUMN_NAME_TAG);
+				do {
+					tags.add(cursor.getString(colIdxTag));
+				} while (cursor.moveToNext());
+			}
+		} finally {
+			cursor.close();
+		}
+
+		return tags;
 	}
 
 	void clear() {
 		SQLiteDatabase db = dbHelper.getWritableDatabase();
-		db.execSQL("delete from "+ LogSpec.TABLE_NAME);
+		db.execSQL("delete from " + LogSpec.TABLE_NAME);
 		db.execSQL("VACUUM");
 		db.close();
 	}

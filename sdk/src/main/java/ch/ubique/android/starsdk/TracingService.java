@@ -5,7 +5,6 @@
  *  * Last modified 3/30/20 2:54 PM
  *
  */
-
 package ch.ubique.android.starsdk;
 
 import android.app.*;
@@ -19,6 +18,8 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+
+import java.util.ArrayList;
 
 import ch.ubique.android.starsdk.gatt.BleClient;
 import ch.ubique.android.starsdk.gatt.BleServer;
@@ -95,14 +96,40 @@ public class TracingService extends Service {
 			contentIntent = PendingIntent.getActivity(this, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		}
 
-		return new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-				.setOngoing(true)
-				.setContentTitle(getString(R.string.star_sdk_service_notification_title))
-				.setContentText(getString(R.string.star_sdk_service_notification_text))
-				.setPriority(NotificationCompat.PRIORITY_LOW)
-				.setSmallIcon(R.drawable.ic_begegnungen)
-				.setContentIntent(contentIntent)
-				.build();
+		TracingStatus status = STARTracing.getStatus(this);
+		if (status.getErrors().size() > 0) {
+			String errorText = getNotificationErrorText(status.getErrors());
+			return new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+					.setOngoing(true)
+					.setContentTitle(getString(R.string.star_sdk_service_notification_title))
+					.setSmallIcon(R.drawable.ic_begegnungen)
+					.setStyle(new NotificationCompat.BigTextStyle()
+							.bigText(errorText))
+					.setPriority(NotificationCompat.PRIORITY_DEFAULT)
+					.setContentIntent(contentIntent)
+					.build();
+		} else {
+			return new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+					.setOngoing(true)
+					.setContentTitle(getString(R.string.star_sdk_service_notification_title))
+					.setContentText(getString(R.string.star_sdk_service_notification_text))
+					.setSmallIcon(R.drawable.ic_begegnungen)
+					.setPriority(NotificationCompat.PRIORITY_LOW)
+					.setContentIntent(contentIntent)
+					.build();
+		}
+	}
+
+	private String getNotificationErrorText(ArrayList<TracingStatus.ErrorState> errors) {
+		StringBuilder b = new StringBuilder(getString(R.string.star_sdk_service_notification_errors)).append("\n");
+		for (int i = 0; i < errors.size(); i++) {
+			TracingStatus.ErrorState error = errors.get(i);
+			b.append(getString(error.getErrorString()));
+			if (i < errors.size() - 1) {
+				b.append(", ");
+			}
+		}
+		return b.toString();
 	}
 
 	@RequiresApi(api = Build.VERSION_CODES.O)
@@ -140,7 +167,16 @@ public class TracingService extends Service {
 			Logger.e(TAG, t);
 		}
 
-		handler.postDelayed(() -> {scheduleNextRun(this, scanInterval);}, scanDuration);
+		handler.postDelayed(() -> {
+			stopScanning();
+			scheduleNextRun(this, scanInterval);
+		}, scanDuration);
+	}
+
+	private void stopScanning() {
+		if (bleClient != null) {
+			bleClient.stopScan();
+		}
 	}
 
 	public static void scheduleNextRun(Context context, long scanInterval) {

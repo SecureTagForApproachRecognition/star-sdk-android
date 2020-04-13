@@ -4,5 +4,10 @@
 	<string name="star_sdk_service_notification_channel">STAR SDK</string>
 	<string name="star_sdk_service_notification_title">STAR SDK</string>
 	<string name="star_sdk_service_notification_text">Looking for people nearby…</string>
+	<string name="star_sdk_service_notification_errors">App can\'t function properly:</string>
+	<string name="star_sdk_service_notification_error_network_sync">error while loading new contact data</string>
+	<string name="star_sdk_service_notification_error_location_permission">missing location permission</string>
+	<string name="star_sdk_service_notification_error_bluetooth_disabled">bluetooth is disabled</string>
+	<string name="star_sdk_service_notification_error_battery_optimization">battery optimization enabled</string>
 
 </resources>

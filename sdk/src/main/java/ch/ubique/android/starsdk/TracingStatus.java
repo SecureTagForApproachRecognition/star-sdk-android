@@ -60,11 +60,20 @@ public class TracingStatus {
 	}
 
 	public enum ErrorState {
-		NETWORK_ERROR_WHILE_SYNCING,
-		MISSING_LOCATION_PERMISSION,
-		BLE_DISABLED,
-		BATTERY_OPTIMIZER_ENABLED,
-		UNKNOWN
+		NETWORK_ERROR_WHILE_SYNCING(R.string.star_sdk_service_notification_error_network_sync),
+		MISSING_LOCATION_PERMISSION(R.string.star_sdk_service_notification_error_location_permission),
+		BLE_DISABLED(R.string.star_sdk_service_notification_error_bluetooth_disabled),
+		BATTERY_OPTIMIZER_ENABLED(R.string.star_sdk_service_notification_error_battery_optimization);
+
+		private int errorString;
+
+		ErrorState(int errorString) {
+			this.errorString = errorString;
+		}
+
+		public int getErrorString() {
+			return errorString;
+		}
 	}
 
 }
