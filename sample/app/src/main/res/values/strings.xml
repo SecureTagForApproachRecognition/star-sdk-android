@@ -53,4 +53,5 @@
 	<string name="parameter_info_unit_seconds">in seconds</string>
 	<string name="parameter_advertisement_power_level">Power level of advertising</string>
 	<string name="logs_filter_tags">tag filter (comma separated)</string>
+	<string name="parameter_advertisement_mode">Advertising mode</string>
 </resources>

@@ -2,9 +2,6 @@ package ch.ubique.android.starsdk.sample.parameters;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,14 +17,16 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import ch.ubique.android.starsdk.AppConfigManager;
+import ch.ubique.android.starsdk.BluetoothAdvertiseMode;
+import ch.ubique.android.starsdk.BluetoothTxPowerLevel;
 import ch.ubique.android.starsdk.sample.R;
-import ch.ubique.android.starsdk.BluetoothPowerLevel;
 
 public class ParametersFragment extends Fragment {
 
 	private static final int MIN_INTERVAL_SCANNING_SECONDS = 60;
 	private static final int MAX_INTERVAL_SCANNING_SECONDS = 900;
 	private static final int MIN_DURATION_SCANNING_SECONDS = 10;
+	private Spinner spinnerAdvertisingMode;
 	private Spinner spinnerPowerLevel;
 	private SeekBar seekBarScanInterval;
 	private SeekBar seekBarScanDuration;
@@ -127,14 +126,28 @@ public class ParametersFragment extends Fragment {
 			return false;
 		});
 
+		spinnerAdvertisingMode = view.findViewById(R.id.parameter_spinner_advertising_mode);
+		ArrayAdapter<BluetoothAdvertiseMode> advertisingModeAdapter =
+				new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, BluetoothAdvertiseMode.values());
+		spinnerAdvertisingMode.setAdapter(advertisingModeAdapter);
+		spinnerAdvertisingMode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+				setAdvertisingMode(BluetoothAdvertiseMode.values()[position]);
+			}
+
+			@Override
+			public void onNothingSelected(AdapterView<?> parent) { }
+		});
+
 		spinnerPowerLevel = view.findViewById(R.id.parameter_spinner_power_level);
-		ArrayAdapter<BluetoothPowerLevel> powerLevelAdapter =
-				new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, BluetoothPowerLevel.values());
+		ArrayAdapter<BluetoothTxPowerLevel> powerLevelAdapter =
+				new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, BluetoothTxPowerLevel.values());
 		spinnerPowerLevel.setAdapter(powerLevelAdapter);
 		spinnerPowerLevel.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			@Override
 			public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-				setAdvertPowerLevel(BluetoothPowerLevel.values()[position]);
+				setAdvertPowerLevel(BluetoothTxPowerLevel.values()[position]);
 			}
 
 			@Override
@@ -160,7 +173,10 @@ public class ParametersFragment extends Fragment {
 		int duration = (int) (appConfigManager.getScanDuration() / 1000);
 		seekBarScanDuration.setProgress(duration - MIN_DURATION_SCANNING_SECONDS);
 
-		BluetoothPowerLevel selectedLevel = appConfigManager.getBluetoothPowerLevel();
+		BluetoothAdvertiseMode selectedMode = appConfigManager.getBluetoothAdvertiseMode();
+		spinnerAdvertisingMode.setSelection(selectedMode.ordinal());
+
+		BluetoothTxPowerLevel selectedLevel = appConfigManager.getBluetoothTxPowerLevel();
 		spinnerPowerLevel.setSelection(selectedLevel.ordinal());
 	}
 
@@ -176,8 +192,12 @@ public class ParametersFragment extends Fragment {
 		AppConfigManager.getInstance(getContext()).setScanDuration(duration * 1000);
 	}
 
-	private void setAdvertPowerLevel(BluetoothPowerLevel powerLevel) {
+	private void setAdvertPowerLevel(BluetoothTxPowerLevel powerLevel) {
 		AppConfigManager.getInstance(getContext()).setBluetoothPowerLevel(powerLevel);
+	}
+
+	private void setAdvertisingMode(BluetoothAdvertiseMode mode) {
+		AppConfigManager.getInstance(getContext()).setBluetoothAdvertiseMode(mode);
 	}
 
 	private void hideKeyboard(View view) {

@@ -157,9 +157,11 @@ public class BleServer {
 				.addManufacturerData(MANUFACTURER_ID, getAdvertiseData())
 				.build();
 
+		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
+
 		AdvertiseSettings.Builder settingBuilder = new AdvertiseSettings.Builder();
-		settingBuilder.setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER);
-		settingBuilder.setTxPowerLevel(AppConfigManager.getInstance(context).getBluetoothPowerLevel().getValue());
+		settingBuilder.setAdvertiseMode(appConfigManager.getBluetoothAdvertiseMode().getValue());
+		settingBuilder.setTxPowerLevel(appConfigManager.getBluetoothTxPowerLevel().getValue());
 		settingBuilder.setConnectable(true);
 
 		mLeAdvertiser.startAdvertising(settingBuilder.build(), advBuilder.build(), scanResponse, advertiseCallback);
