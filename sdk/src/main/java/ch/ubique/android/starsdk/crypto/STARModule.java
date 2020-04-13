@@ -49,6 +49,7 @@ public class STARModule {
 	//TODO set correct broadcast key
 	private static final byte[] BROADCAST_KEY = "TODOTODOTODOTODOTODOTODOTODOTODOTODO".getBytes();
 
+
 	private static final String KEY_SK_LIST_JSON = "SK_LIST_JSON";
 	private static STARModule instance;
 	private SharedPreferences esp;
@@ -151,12 +152,22 @@ public class STARModule {
 		}
 	}
 
+	private int getEpochCounter(long time) {
+		DayDate day = new DayDate(time);
+		return (int) (time - day.getStartOfDayTimestamp()) / MILLISECONDS_PER_EPOCH;
+	}
+
+	public long getCurrentEpochStart() {
+		long now = System.currentTimeMillis();
+		DayDate currentDay = new DayDate(now);
+		return currentDay.getStartOfDayTimestamp() + getEpochCounter(now) * MILLISECONDS_PER_EPOCH;
+	}
+
 	public byte[] getCurrentEphId() {
 		long now = System.currentTimeMillis();
 		DayDate currentDay = new DayDate(now);
 		byte[] SK = getCurrentSK(currentDay);
-		int counter = (int) (now - currentDay.getStartOfDayTimestamp()) / MILLISECONDS_PER_EPOCH;
-		return createEphIds(SK).get(counter);
+		return createEphIds(SK).get(getEpochCounter(now));
 	}
 
 	public void checkContacts(byte[] sk, DayDate onsetDate, DayDate bucketDate, GetContactsCallback contactCallback,
@@ -213,6 +224,7 @@ public class STARModule {
 			SharedPreferences.Editor editor = esp.edit();
 			editor.clear();
 			editor.commit();
+			init();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}

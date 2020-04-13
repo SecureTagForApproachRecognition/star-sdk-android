@@ -8,7 +8,6 @@
 package ch.ubique.android.starsdk;
 
 import android.content.Context;
-import android.util.Base64;
 import androidx.annotation.NonNull;
 import androidx.work.*;
 
@@ -22,8 +21,6 @@ import ch.ubique.android.starsdk.backend.models.ExposedList;
 import ch.ubique.android.starsdk.backend.models.Exposee;
 import ch.ubique.android.starsdk.database.Database;
 import ch.ubique.android.starsdk.util.DayDate;
-
-import static ch.ubique.android.starsdk.util.Base64Util.fromBase64;
 
 public class SyncWorker extends Worker {
 
@@ -74,7 +71,7 @@ public class SyncWorker extends Worker {
 		Application appConfig = appConfigManager.getAppConfig();
 
 		Database database = new Database(context);
-		database.generateContactsFromHandshakes();
+		database.generateContactsFromHandshakes(context);
 
 		BackendRepository backendRepository =
 				new BackendRepository(context, appConfig.getBackendBaseUrl(), appConfig.getListBaseUrl());
@@ -96,6 +93,8 @@ public class SyncWorker extends Worker {
 
 			dateToLoad = dateToLoad.getNextDay();
 		}
+
+		database.removeOldKnownCases();
 
 		appConfigManager.setLastSyncDate(System.currentTimeMillis());
 	}

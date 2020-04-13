@@ -64,6 +64,15 @@ public class Database {
 		});
 	}
 
+	public void removeOldKnownCases() {
+		databaseThread.post(() -> {
+			SQLiteDatabase db = databaseOpenHelper.getWritableDatabase();
+			DayDate lastDayToKeep = new DayDate().subtractDays(STARModule.NUMBER_OF_DAYS_TO_KEEP_DATA);
+			db.delete(KnownCases.TABLE_NAME, KnownCases.BUCKET_DAY + " < ?",
+					new String[] { "" + lastDayToKeep.getStartOfDayTimestamp() });
+		});
+	}
+
 	public void addHandshake(Context context, byte[] star, int txPowerLevel, int rssi, long timestamp) {
 		SQLiteDatabase db = databaseOpenHelper.getWritableDatabase();
 		ContentValues values = new ContentValues();
@@ -107,8 +116,10 @@ public class Database {
 		});
 	}
 
-	public void generateContactsFromHandshakes() {
+	public void generateContactsFromHandshakes(Context context) {
 		databaseThread.post(() -> {
+
+			long currentEpochStart = STARModule.getInstance(context).getCurrentEpochStart();
 
 			List<Handshake> handshakes = getHandshakes();
 			//TODO add advanced logic to create contacts
@@ -117,12 +128,13 @@ public class Database {
 				addContact(contact);
 			}
 
+			SQLiteDatabase db = databaseOpenHelper.getWritableDatabase();
 			if (!KEEP_HANDSHAKES_FOR_DEEBUG_PURPOSES) {
-				DayDate lastDayToKeep = new DayDate().subtractDays(STARModule.NUMBER_OF_DAYS_TO_KEEP_DATA);
-				SQLiteDatabase db = databaseOpenHelper.getWritableDatabase();
-				db.delete(Handshakes.TABLE_NAME, Handshakes.TIMESTAMP + "<?",
-						new String[] { "" + lastDayToKeep.getStartOfDayTimestamp() });
+				db.delete(Handshakes.TABLE_NAME, Handshakes.TIMESTAMP + " < ?",
+						new String[] { "" + currentEpochStart });
 			}
+			DayDate lastDayToKeep = new DayDate().subtractDays(STARModule.NUMBER_OF_DAYS_TO_KEEP_DATA);
+			db.delete(Contacts.TABLE_NAME, Contacts.DATE + " < ?", new String[] { "" + lastDayToKeep.getStartOfDayTimestamp() });
 		});
 	}
 

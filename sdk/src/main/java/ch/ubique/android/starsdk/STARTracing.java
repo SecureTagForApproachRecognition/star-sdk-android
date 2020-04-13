@@ -158,6 +158,7 @@ public class STARTracing {
 							@Override
 							public void onSuccess(Void response) {
 								appConfigManager.setAmIExposed(true);
+								STARModule.getInstance(context).reset();
 								callback.onSuccess(response);
 							}
 
